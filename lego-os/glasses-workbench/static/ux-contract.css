@@ -1,0 +1,17 @@
+#cursor-navigation{display:none;position:absolute;right:18px;bottom:18px;z-index:80;gap:5px;padding:5px;border:1px solid #555;border-radius:30px;background:#151515ed}
+body[data-lego-input=cursor] #cursor-navigation{display:flex}
+#cursor-navigation button{width:42px;height:42px;min-width:42px;padding:0;border:0;border-radius:50%;background:#292929;color:white;font-size:25px}
+body[data-lego-input=cursor] .os-display{padding-bottom:86px;touch-action:pan-y}
+.stream-comments article{border-top:1px solid #333;padding:18px 0}.stream-comments p,.stream-detail p{white-space:pre-wrap;overflow-wrap:anywhere}.stream-comments b{font-size:23px;color:#aaa}.stream-comments p{font-size:27px;line-height:1.5}.stream-detail,.reddit-stream{padding-bottom:65px}
+.os-display .sv-post-copy strong{font-size:30px;line-height:1.35}.os-display .sv-post-title{font-size:34px;line-height:1.3}.os-display .sv-post-excerpt{font-size:27px;line-height:1.5}
+.system-push{position:absolute;top:16px;left:16px;right:16px;z-index:200;background:#181818;border:2px solid #ff5b16;border-radius:20px;padding:10px;display:flex;gap:10px;box-shadow:0 8px 20px #0009}.system-push button{background:transparent;color:white;border:0}.system-push button:first-child{flex:1;text-align:left}.system-push b,.system-push span{display:block}.system-push button:focus{outline:2px solid #ff5b16}
+.os-display .v2-app-nav{display:none}.os-top small{display:none}
+.stream-comments [data-focus-region]{max-height:240px;overflow:auto;overscroll-behavior:contain}
+.focus-reader{max-height:60vh;overflow:auto;overscroll-behavior:contain;font-size:27px;line-height:1.55;white-space:pre-wrap;outline-offset:3px}.focus-reader svg{max-width:100%}.focus-reader:focus{outline:2px solid #ff5b16}
+.agent-progress{display:flex;align-items:center;gap:10px;font-size:23px;color:#ccc}.agent-progress i{width:10px;height:10px;flex:none;border-radius:50%;background:#ff5b16;animation:agent-wait 1s ease-in-out infinite}@keyframes agent-wait{50%{opacity:.25;transform:scale(.75)}}
+.lego-system-layer[data-voice-phase=synthesizing] .orb-core,.lego-system-layer[data-voice-phase=responding] .orb-core{animation:agent-wait 1s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.agent-progress i{animation:none}}
+.service-refresh-progress{position:absolute;right:20px;top:60px;z-index:30;display:flex;align-items:center;gap:7px;padding:6px 10px;background:#181818ef;border-radius:18px;color:#fff;font-size:14px;pointer-events:none}.service-refresh-progress i{width:7px;height:7px;border-radius:50%;background:#ff5b16;animation:agent-wait 1s ease-in-out infinite}
+#cursor-navigation{left:18px;right:auto}
+.os-frame:has(.lego-voice-panel) #cursor-navigation,.os-frame:has(dialog[open]) #cursor-navigation{display:none!important}
+.lego-voice-panel:not(:has(.agent-service)){max-height:560px}.lego-voice-panel>.lego-voice-answer{flex:0 0 auto;min-height:44px}.lego-voice-panel [hidden]{display:none!important}.agent-progress{flex-shrink:0;margin:8px 0}

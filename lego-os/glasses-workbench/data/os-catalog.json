@@ -1,0 +1,641 @@
+{
+  "framework": {
+    "id": "os-framework-v1",
+    "name": "OS 硬件与运行框架 · v0.2",
+    "version": 2,
+    "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd",
+    "sourceTitle": "OS & 容器 & 管道 🚧",
+    "sourceReadAt": "2026-11-11",
+    "display": {
+      "width": 600,
+      "height": 800,
+      "fov": 30,
+      "fovAxis": "diagonal",
+      "technology": "彩色光波导",
+      "basis": "用户确认：对角30°、双目、通常正前方；精确光学位置待校准",
+      "eyeConfiguration": "binocular",
+      "placement": "front-default",
+      "confirmedBy": "用户",
+      "confirmedAt": "2026-11-13",
+      "opticalOffsetDegrees": {
+        "horizontal": null,
+        "vertical": null
+      },
+      "binocularOverlap": "待设备确认",
+      "resolutionScope": "600×800为当前逻辑画布；是否每眼物理分辨率待确认",
+      "nominalEstimate": {
+        "horizontalFovDegrees": 18.27,
+        "verticalFovDegrees": 24.2,
+        "averagePixelsPerDegreeX": 32.85,
+        "averagePixelsPerDegreeY": 33.06,
+        "status": "几何估算，非实测",
+        "assumptions": "600×800完整矩形对应30°对角FOV、方形像素、无裁切/畸变；双目不等于FOV翻倍或完全重叠"
+      }
+    },
+    "platforms": [
+      {
+        "id": "island",
+        "name": "低功耗岛",
+        "state": "文档定义",
+        "assignment": "持续感知与轻量交互候选；具体调度、内存与功耗待验证"
+      },
+      {
+        "id": "android",
+        "name": "Android 平台",
+        "state": "文档定义",
+        "assignment": "复杂窗口、重感知和应用服务候选；原生 app 兼容暂定"
+      }
+    ],
+    "chip": {
+      "name": "AR1 Gen2",
+      "state": "文档指定架构基线，非实机验证"
+    },
+    "peripherals": {
+      "confirmedByUser": [
+        "OFN",
+        "可按压滚轴",
+        "快捷键",
+        "手势外设",
+        "HID",
+        "相机",
+        "麦克风",
+        "扬声器",
+        "陀螺仪"
+      ],
+      "unconfirmed": [
+        "独立 GNSS",
+        "眼动",
+        "深度传感器",
+        "空间锚定",
+        "触觉马达",
+        "BLE/Wi-Fi具体型号与协议版本"
+      ]
+    },
+    "layers": [
+      {
+        "name": "硬件与 HAL",
+        "description": "显示、采集与交互设备；协议、权限和可用性声明"
+      },
+      {
+        "name": "双平台运行与管道",
+        "description": "低功耗岛 / Android，事件总线、媒体流、跨设备通信、任务接续"
+      },
+      {
+        "name": "系统服务与治理",
+        "description": "Always-on 并行感知、焦点、权限租约、功耗预算、后台任务、状态"
+      },
+      {
+        "name": "容器与交互",
+        "description": "主页、通知、Widget、服务中心、overlay、快捷抵达、独占窗口、设置、VUI"
+      },
+      {
+        "name": "服务与发布",
+        "description": "工作台草稿 → 发布快照 → OS 安装 → 数据接入 → 使用/切换/更新"
+      }
+    ],
+    "protocols": [
+      "A2DP",
+      "HFP",
+      "AVRCP",
+      "HID",
+      "BLE",
+      "MFi（认证依赖）",
+      "Wi-Fi",
+      "Wi-Fi Aware（待适配）",
+      "中继网络"
+    ],
+    "explorations": [
+      "宠物",
+      "全局悬停窗口",
+      "3DOF/空间多窗口",
+      "原生 app 兼容"
+    ],
+    "openQuestions": [
+      "已确认对角30°、双目、默认正前方；每眼分辨率、双目重叠、精确角偏移及实际PPD待设备校准。",
+      "各传感器规格、采样率、帧率及可并行数量待硬件定义。",
+      "低功耗岛/Android 的任务边界、IPC、唤醒和功耗预算待验证。",
+      "蓝牙协议的角色、并发组合、MFi认证、Wi-Fi Aware支持待验证。",
+      "位置来源是手机/网络/浏览器还是设备GNSS待确认，不新增假定GNSS。",
+      "持续感知目标章节仍为空，需要触发策略、保留期和同意流程。",
+      "通知优先级、音频/视觉焦点仲裁和异常恢复规则需要产品细则。"
+    ],
+    "existingMappings": {
+      "O06": "通知请求；新增O11负责历史中心",
+      "O07": "Widget",
+      "O08": "独占窗口",
+      "O09": "语音助手容器",
+      "A05": "生命周期",
+      "G02": "全局焦点仲裁",
+      "G03": "资源预算",
+      "D06": "跨端状态同步",
+      "I01-I05": "采集输入；新增I09负责持续订阅",
+      "P01/P07": "ASR/翻译；新增O16负责跨业务字幕呈现"
+    }
+  },
+  "atoms": [
+    {
+      "id": "I09",
+      "name": "持续感知订阅",
+      "input": "SensorPolicy + Consent",
+      "output": "SensorEventStream",
+      "category": "输入与感知",
+      "categoryId": "I",
+      "color": "#0059ef",
+      "description": "音频、视觉、IMU、Geo 的 Always-on 订阅，带权限、采样率、租约和停止条件；不是独占应用。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "输入与感知",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "F09",
+      "name": "VUI 会话与轮次管理",
+      "input": "SessionMode + Utterance",
+      "output": "SessionState",
+      "category": "流程与连接",
+      "categoryId": "F",
+      "color": "#ffce00",
+      "description": "单工、半双工、全双工及长链路会话；模式声明不代表 ASR/TTS 已接入。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "流程与连接",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "F10",
+      "name": "跨平台唤醒与任务接续",
+      "input": "WakeReason + Checkpoint",
+      "output": "RuntimeHandoff",
+      "category": "流程与连接",
+      "categoryId": "F",
+      "color": "#ffce00",
+      "description": "低功耗岛与 Android 域之间的唤醒、状态移交和恢复；具体调度阈值待硬件团队定义。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "流程与连接",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "F11",
+      "name": "后台任务与完成回调",
+      "input": "JobSpec + Cancellation",
+      "output": "JobState + ResultEvent",
+      "category": "流程与连接",
+      "categoryId": "F",
+      "color": "#ffce00",
+      "description": "多任务并行、取消、错误与完成回调；完成后由通知/注意力策略决定呈现。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "流程与连接",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "P09",
+      "name": "主动建议生成",
+      "input": "ContextEvidence + Policy",
+      "output": "SuggestionCandidate",
+      "category": "理解与转换",
+      "categoryId": "P",
+      "color": "#8238ed",
+      "description": "由感知上下文提出带依据、时效与可执行目标的建议，接受注意力治理。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "理解与转换",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "P10",
+      "name": "屏幕语义与可操作目标",
+      "input": "VisibleUI + Focus",
+      "output": "SemanticActions",
+      "category": "理解与转换",
+      "categoryId": "P",
+      "color": "#8238ed",
+      "description": "可见可说：读取当前界面语义、可操作项与焦点，避免无依据控制不可见页面。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "理解与转换",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "C08",
+      "name": "蓝牙协议会话适配",
+      "input": "Peer + Profile + Consent",
+      "output": "ProfileSession",
+      "category": "外部连接器",
+      "categoryId": "C",
+      "color": "#ff6400",
+      "description": "A2DP、HFP、AVRCP、HID、BLE 分开声明；MFi 依认证与平台授权。协议目标不等于硬件已支持。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "外部连接器",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "C09",
+      "name": "网络与中继连接",
+      "input": "NetworkPolicy + Transport",
+      "output": "NetworkState",
+      "category": "外部连接器",
+      "categoryId": "C",
+      "color": "#ff6400",
+      "description": "Wi-Fi、BLE 中继与 Wi-Fi Aware 的发现、重连和网络路径；支持情况待适配验证。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "外部连接器",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "C10",
+      "name": "跨设备通知与短信同步",
+      "input": "ApprovedDevice + ReadScope",
+      "output": "RemoteNotification",
+      "category": "外部连接器",
+      "categoryId": "C",
+      "color": "#ff6400",
+      "description": "跨设备通知/短信同步，保留来源与已读状态；不等于获得任意消息发送权限。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "外部连接器",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "C11",
+      "name": "跨设备电话与通讯录适配",
+      "input": "ApprovedDevice + CallScope",
+      "output": "CallState + ContactRef",
+      "category": "外部连接器",
+      "categoryId": "C",
+      "color": "#ff6400",
+      "description": "电话、联系人与音频路由分开管理；权限和终端能力先验证。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "外部连接器",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "C12",
+      "name": "双向文件传输",
+      "input": "FileRef + Peer + Consent",
+      "output": "TransferReceipt",
+      "category": "外部连接器",
+      "categoryId": "C",
+      "color": "#ff6400",
+      "description": "蓝牙或 Wi-Fi Aware 等传输的进度、取消、断点和接收确认；不自动打开不可信文件。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "外部连接器",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O10",
+      "name": "系统主页与状态汇总",
+      "input": "SystemState + ServiceSummary",
+      "output": "HomeSurface",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "系统状态、设备信息和关键服务状态；不与业务窗口合并。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O11",
+      "name": "通知中心与历史",
+      "input": "NotificationRecord + ReadState",
+      "output": "NotificationCenter",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "对 O06 通知请求的系统历史容器，支持查看、已读和进入服务。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O12",
+      "name": "服务中心与启动入口",
+      "input": "InstalledRelease + LaunchIntent",
+      "output": "ServiceLaunch",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "已发布/安装服务的发现、启动、切换和禁用；不显示未发布草稿。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O13",
+      "name": "全局交互浮层请求",
+      "input": "OverlaySpec + Priority",
+      "output": "OverlayHandle",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "快捷菜单、主动建议、临时提示与业务弹窗；覆盖期间底层业务保持，关闭后恢复原焦点。非空间锚定。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O14",
+      "name": "快捷抵达与负一屏入口",
+      "input": "QuickLaunchSpec + Scope",
+      "output": "QuickAccessSurface",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "区分首页快捷抵达、全局抵达与 overlay；占用功能焦点时保留返回路径。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O15",
+      "name": "状态栏与临时提示",
+      "input": "StatusItem + Expiry",
+      "output": "StatusIndicator",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "持久状态与短时 Toast 区分；临时提示有过期条件，不默认抢占焦点。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O16",
+      "name": "无障碍字幕层",
+      "input": "TimedTranscript + CaptionPolicy",
+      "output": "CaptionSurface",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#00bde0",
+      "description": "字幕作为跨业务呈现层，带时间、原文/译文标识与隐私策略；复用 P01/P07。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "输出与呈现",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "D07",
+      "name": "系统设置与个性化配置",
+      "input": "ScopedPreference + Schema",
+      "output": "SettingsRevision",
+      "category": "数据与状态",
+      "categoryId": "D",
+      "color": "#00ae53",
+      "description": "显示、通知、交互映射与偏好的版本化存储和恢复。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "数据与状态",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "A07",
+      "name": "系统快捷命令",
+      "input": "ValidatedSystemIntent",
+      "output": "SystemActionReceipt",
+      "category": "动作与执行",
+      "categoryId": "A",
+      "color": "#f52330",
+      "description": "返回首页、切换服务、截图等命令；截图需敏感界面策略，不能默认暴露业务数据。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "动作与执行",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "G08",
+      "name": "持续感知权限与租约",
+      "input": "SensorRequest + Consent",
+      "output": "SensorLease",
+      "category": "系统治理",
+      "categoryId": "G",
+      "color": "#313747",
+      "description": "Always-on 采集边界、指示、撤销、租约和最小采样策略；低功耗不代表无需权限。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "系统治理",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "G09",
+      "name": "麦克风与音频焦点仲裁",
+      "input": "AudioRequest + SessionPriority",
+      "output": "AudioFocusDecision",
+      "category": "系统治理",
+      "categoryId": "G",
+      "color": "#313747",
+      "description": "通话、录音、会话、字幕与 TTS 的占用、打断、混音及恢复规则。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "系统治理",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "G10",
+      "name": "双平台功耗策略",
+      "input": "PowerState + Workload",
+      "output": "RuntimeBudget",
+      "category": "系统治理",
+      "categoryId": "G",
+      "color": "#313747",
+      "description": "对 G03 的双平台落点：任务分配、唤醒、热降级；功耗与温升阈值未给定，禁止虚构。",
+      "status": "待建设",
+      "hardware": false,
+      "scope": "system",
+      "selectable": false,
+      "tags": [
+        "系统治理",
+        "OS框架补全"
+      ],
+      "constraints": "来自 OS & 容器 & 管道草案；属于设计定义，尚无原生执行器。系统专属，不作为任意用户流程绕过治理的能力。",
+      "example": "",
+      "source": "https://leiniao-ibg.feishu.cn/wiki/HZr8wDrBDiONx9kvCwbcw6a6nMd"
+    },
+    {
+      "id": "O17",
+      "name": "自定义表盘输出",
+      "category": "输出与呈现",
+      "categoryId": "O",
+      "color": "#ff5100",
+      "input": "WatchfaceScene v1 + 本机时间日期",
+      "output": "已发布候选表盘；用户选择后替换 OS 主页",
+      "description": "600×800 图层场景，支持图形、时间日期绑定、受控动效与系统入口，可与 Widget 和应用窗口并行。",
+      "status": "可模拟",
+      "hardware": false,
+      "scope": "service",
+      "selectable": true,
+      "tags": [
+        "表盘",
+        "动态界面",
+        "输出与呈现"
+      ],
+      "constraints": "软件模拟；发布不自动应用。天气、电量绑定尚未接通，不使用虚构数值。",
+      "example": "创建动态时钟表盘，发布后在 OS 表盘库选择版本。"
+    }
+  ]
+}

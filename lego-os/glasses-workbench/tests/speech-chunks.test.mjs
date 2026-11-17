@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(new URL('../static/speech-chunks.js',import.meta.url),'utf8'),c);
+test('long speech starts from a bounded sentence batch without waiting for all chunks',()=>{const text='这是第一句。'+'这是后续的长回答。'.repeat(200);const parts=c.LegoSpeechChunks(text);assert.ok(parts.length>3);assert.ok(parts.every(x=>x.length<=240));assert.equal(parts.join(''),text)});
+test('one long unpunctuated sentence is bounded and lossless',()=>{const text='测试'.repeat(900);const parts=c.LegoSpeechChunks(text);assert.equal(parts.join(''),text);assert.ok(parts.every(x=>x.length<=240))});

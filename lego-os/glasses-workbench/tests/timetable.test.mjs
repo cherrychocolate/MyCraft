@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import '../static/timetable-engine.js';
+const e=globalThis.TimetableEngine;
+const base=()=>({start:'2026-11-02',courses:[{id:'a',title:'A',day:0,start:'09:00',end:'10:30',from:1,to:18,repeat:'odd'}],exceptions:[]});
+test('date arithmetic crosses month and year',()=>{assert.equal(e.add('2026-12-31',1),'2027-01-01');assert.equal(e.monday('2026-11-08'),'2026-11-02')});
+test('odd weeks, semester bounds and empty days',()=>{const d=base();assert.equal(e.occurrences(d,'2026-11-02').length,1);assert.equal(e.occurrences(d,'2026-11-09').length,0);assert.equal(e.occurrences(d,'2026-11-03').length,0);assert.equal(e.occurrences(d,'2026-10-19').length,0);assert.equal(e.occurrences(d,'2027-03-22').length,0)});
+test('cancelled course remains visible but never upcoming',()=>{const d=base();d.exceptions.push({course:'a',date:'2026-11-02',cancelled:true});const rows=e.occurrences(d,'2026-11-02');assert.equal(rows[0].status,'cancelled');assert.equal(e.upcoming(rows,'08:00'),null)});
+test('reschedule removes original and adds one target instance',()=>{const d=base();d.exceptions.push({course:'a',date:'2026-11-02',patch:{date:'2026-11-03',start:'14:00',end:'15:00'}});assert.equal(e.occurrences(d,'2026-11-02').length,0);assert.equal(e.occurrences(d,'2026-11-03')[0].start,'14:00');assert.equal(e.occurrences(d,'2026-11-16')[0].start,'09:00')});
+test('ongoing course and day end',()=>{const rows=e.occurrences(base(),'2026-11-02');assert.equal(e.upcoming(rows,'09:30').id,'a');assert.equal(e.upcoming(rows,'10:30'),null)});
+test('detect overlap but allow adjacent classes',()=>{assert.deepEqual(e.conflicts([{id:'a',start:'09:00',end:'10:00'},{id:'b',start:'10:00',end:'11:00'}]),[]);assert.deepEqual(e.conflicts([{id:'a',start:'09:00',end:'10:01'},{id:'b',start:'10:00',end:'11:00'}]),['a','b'])});
+test('cancel rescheduled instance retains origin and target date',()=>{const d=base();d.exceptions.push({course:'a',date:'2026-11-02',cancelled:true,patch:{date:'2026-11-03',start:'14:00',end:'15:00'}});assert.equal(e.occurrences(d,'2026-11-02').length,0);const r=e.occurrences(d,'2026-11-03')[0];assert.equal(r.originDate,'2026-11-02');assert.equal(r.status,'cancelled');assert.equal(e.upcoming([r],'13:00'),null)});

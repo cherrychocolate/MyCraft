@@ -1,0 +1,4 @@
+// Development adapter only. Never bundled into the hosted Worker.
+import http from 'node:http';import {runtime} from '../tests/runtime.mjs';
+const rt=runtime();delete rt.env.QWEN_API_KEY;delete rt.env.GEMINI_API_KEY;delete rt.env.QWEN_WORKSPACE_ID;
+http.createServer(async(req,res)=>{try{const chunks=[];for await(const chunk of req)chunks.push(chunk);const p=req.method==='POST'?JSON.parse(Buffer.concat(chunks).toString()||'{}'):undefined;const response=await rt.call(req.url,{method:req.method,body:p,origin:req.method==='POST'?'https://test.local':undefined});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()))}catch(e){res.writeHead(500,{'Content-Type':'text/plain'});res.end(e.message)}}).listen(8770,'127.0.0.1',()=>console.log('Cloud release preview: http://127.0.0.1:8770'));

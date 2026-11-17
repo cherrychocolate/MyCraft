@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import '../static/os-input-engine.js';
+const N=globalThis.DeviceNavigation;const box=(id,x,y,w=80,h=50)=>({id,x,y,w,h});
+test('D-pad has four fixed OS destinations independent of focus',()=>{assert.deepEqual(N.destinations,{up:'controls',left:'quick',right:'hub',down:'center'})});
+test('focus uses geometry, preferring aligned targets and never wraps to a different edge',()=>{const items=[box('a',50,50),box('b',180,50),box('c',50,180),box('d',180,180)];assert.equal(N.next(items,'a','right'),'b');assert.equal(N.next(items,'a','down'),'c');assert.equal(N.next(items,'d','left'),'c');assert.equal(N.next(items,'a','up'),null);assert.equal(N.next(items,'gone','down'),'a')});
+test('focus includes items below the viewport so the adapter can reveal them',()=>{assert.equal(N.next([box('top',100,50),box('below',100,1000)],'top','down'),'below')});
+test('custom quick apps remove uninstalled and duplicate entries while preserving an intentional empty list',()=>{assert.deepEqual(N.quick(['a','b','c','d'],undefined),['a','b','c']);assert.deepEqual(N.quick(['a','b'],['b','gone','b','a']),['b','a']);assert.deepEqual(N.quick(['a','b'],[]),[])});
+test('simulated flight mode and disconnected transports block live reads',()=>{assert.equal(N.online({}),true);assert.equal(N.online({wifi:false,bluetooth:true}),true);assert.equal(N.online({wifi:false,bluetooth:false}),false);assert.equal(N.online({flightMode:true,wifi:true,bluetooth:true}),false)});
