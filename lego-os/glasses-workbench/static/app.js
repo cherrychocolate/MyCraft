@@ -1,3 +1,5 @@
+const modelAPIBase = ['127.0.0.1','localhost'].includes(location.hostname) && location.port
+  ? `http://127.0.0.1:${Number(location.port)+1}/api/models/` : '/api/models/';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>crypto.randomUUID(); let state={documents:[]},page='home',filter='',category='',current=null,view='canvas',selected=null,undo=[],redo=[],linkFrom=null,focusIndex=0,detail=false,background='dark',simData=null,simSource='模拟数据',streamTimer=null,searchMode='all';

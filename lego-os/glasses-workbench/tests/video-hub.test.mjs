@@ -8,3 +8,17 @@ test('switching channels never starts inactive Actors and missing credentials st
 test('a new search does not display results cached for a different query',()=>{const h=setup().window.VideoHub,s={videoChannel:'youtube',videoQuery:'new',videoFeeds:{youtube:{query:'old',items:[{title:'OLD'}]}}};assert.equal(h.data({videoConfig:{query:'new'}},s),undefined)});
 test('official YouTube source runs without loading or billing Apify',async()=>{const c=setup();const official=fs.readFileSync(new URL('../static/youtube-official.js',import.meta.url),'utf8');c.api=()=>{};c.osContent=()=>{};let calls=[];c.connectorAPI=async(path,p)=>{calls.push([path,p]);return {type:'content-feed',platform:'youtube',query:p.query,items:[{id:'abcdefghijk'}]}};c.connectorLoad=()=>{throw Error('Apify must not be touched')};vm.runInContext(official,c);const s={};const h=c.runtimeHandlers({template:'video',videoConfig:{query:'AR'}},s);await h.C_YOUTUBE_SEARCH({config:'{"maxResults":5}'});assert.equal(calls[0][0],'youtube/search');assert.equal(s.videoFeeds.youtube.items.length,1)});
 test('stream pagination survives a stale saved detail route after refreshed results change',()=>{const c=setup();c.VideoHub=c.window.VideoHub;vm.runInContext(fs.readFileSync(new URL('../static/content-streams.js',import.meta.url),'utf8'),c);const s={route:'video-detail',videoPost:'youtube:missing',videoQuery:'AR',videoFeeds:{youtube:{query:'AR',platform:'youtube',nextPageToken:'PAGE2',items:[{id:'abcdefghijk',title:'Current',sourcePlatform:'youtube',url:'https://www.youtube.com/watch?v=abcdefghijk'}]}}};assert.match(c.VideoHub.render({template:'video',videoConfig:{query:'AR'}},s),/stream-video-more/)});
+
+test('assistant playback takes priority over a restored app query',async()=>{
+  const ctx=setup();
+  const instance={doc:{nodes:[{atomId:'C_YOUTUBE_SEARCH'}]},s:{}};
+  ctx.osInstance=()=>instance;
+  ctx.osLaunch=async()=>Object.assign(instance.s,{videoQuery:'previous',route:'today'});
+  ctx.ServiceRuntime.navigate=(s,route)=>{s.route=route;};
+  ctx.renderOS=()=>{};
+  const item={id:'abcdefghijk',sourcePlatform:'youtube',url:'https://www.youtube.com/watch?v=abcdefghijk'};
+  const hub=ctx.window.VideoHub;
+  await hub.playFromAssistant('youtube',{query:'AI tools',at:1,items:[item]},item.id);
+  assert.equal(instance.s.videoQuery,'AI tools');
+  assert.match(hub.render(instance.doc,instance.s),/autoplay=1/);
+});

@@ -1,0 +1,93 @@
+.kai-character {
+  --kai-atlas:url('/assistant/kai-poses.webp');
+  --kai-gestures:url('/assistant/kai-gestures.webp');
+  --kai-front:url('/assistant/kai.png');
+  --kai-walk:0% 0%;
+  --kai-observe:50% 0%;
+  --kai-think:100% 0%;
+  --kai-run:0% 50%;
+  --kai-right:50% 50%;
+  --kai-back:100% 50%;
+  --kai-left:0% 100%;
+  --kai-watch:50% 100%;
+  --kai-coffee:100% 100%;
+  aspect-ratio:1;
+  height:auto;
+  background:var(--kai-front) center / contain no-repeat;
+  animation:kai-ambient-poses 16s step-end infinite,kai-ambient-move 16s ease-in-out infinite;
+}
+.kai-launch[data-activity=working] .kai-character,
+[data-voice-phase]:is([data-voice-phase=thinking],[data-voice-phase=transcribing],[data-voice-phase=synthesizing]) .kai-awake .kai-character {
+  animation:kai-thinking-poses 3.8s step-end infinite,kai-thinking-move 3.8s ease-in-out infinite;
+}
+.kai-launch[data-activity=updated] .kai-character {
+  animation:kai-celebrate-poses 4.8s step-end infinite,kai-celebrate-move 4.8s ease-in-out infinite;
+}
+[data-voice-phase=listening] .kai-awake .kai-character,.message-compose .kai-character {
+  background:var(--kai-atlas) var(--kai-observe) / 300% 300% no-repeat;
+  animation:kai-listen-move 2s ease-in-out infinite;
+}
+[data-voice-phase]:is([data-voice-phase=responding],[data-voice-phase=speaking]) .kai-awake .kai-character {
+  animation:kai-reply-poses 2.6s step-end infinite,kai-listen-move 2.6s ease-in-out infinite;
+}
+[data-kai-watching=true][data-voice-phase=answer] .kai-awake .kai-character {
+  animation:kai-watch-poses 13s step-end infinite;
+}
+@keyframes kai-ambient-poses {
+  0%,25%,81%,100% { background-image:var(--kai-front); background-size:contain; background-position:center; }
+  29%,34% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-walk); }
+  32% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-right); }
+  37% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-observe); }
+  51% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-watch); }
+  65% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-coffee); }
+}
+@keyframes kai-ambient-move {
+  0%,28%,60%,86%,100% { transform:none; }
+  30% { transform:translate(-7%,-2%); }
+  34% { transform:translate(7%,-3%); }
+  43% { transform:translateX(3%) rotate(-4deg); }
+  72% { transform:rotate(-4deg) scale(1.045); }
+}
+@keyframes kai-thinking-poses {
+  0% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-observe); }
+  17%,100% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-think); }
+}
+@keyframes kai-thinking-move {
+  0%,100% { transform:rotate(-4deg); }
+  43%,68% { transform:translateY(-2%) rotate(4deg); }
+}
+@keyframes kai-celebrate-poses {
+  0%,32%,100% { background-image:var(--kai-front); background-size:contain; background-position:center; }
+  6% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-run); }
+  9% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-walk); }
+  12% { background-image:var(--kai-gestures); background-size:200% 200%; background-position:0% 100%; }
+  16% { background-image:var(--kai-gestures); background-size:200% 200%; background-position:100% 100%; }
+  18% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-right); }
+  23% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-back); }
+  27% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-left); }
+}
+@keyframes kai-celebrate-move {
+  0%,32%,100% { transform:none; }
+  6% { transform:translate(-7%,3%) scale(1.035,.95); }
+  12% { transform:translate(7%,-9%) scale(.98,1.04); }
+  19% { transform:translateY(-5%); }
+  28% { transform:translateY(2%) scale(1.035,.96); }
+}
+@keyframes kai-reply-poses {
+  0%,43%,100% { background-image:var(--kai-front); background-size:contain; background-position:center; }
+  12%,27% { background-image:var(--kai-gestures); background-size:200% 200%; background-position:0% 0%; }
+  19%,35% { background-image:var(--kai-gestures); background-size:200% 200%; background-position:100% 0%; }
+}
+@keyframes kai-listen-move {
+  0%,100% { transform:none; }
+  52% { transform:translateY(-3%) rotate(-4deg); }
+}
+@keyframes kai-watch-poses {
+  0%,70%,100% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-watch); }
+  56% { background-image:var(--kai-atlas); background-size:300% 300%; background-position:var(--kai-coffee); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .kai-character { animation:none!important; }
+  [data-voice-phase=thinking] .kai-awake .kai-character { background:var(--kai-atlas) var(--kai-think) / 300% 300% no-repeat; }
+  [data-kai-watching=true][data-voice-phase=answer] .kai-awake .kai-character { background:var(--kai-atlas) var(--kai-watch) / 300% 300% no-repeat; }
+}

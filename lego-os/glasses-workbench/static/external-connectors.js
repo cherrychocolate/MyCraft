@@ -1,5 +1,5 @@
 /* Shared connector registry: atomic capabilities, previews and OS use the same executor. */
-async function connectorAPI(path,data){const r=await fetch('http://127.0.0.1:8766/api/models/'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error||'连接器请求失败');return d}
+async function connectorAPI(path,data){const r=await fetch(modelAPIBase+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error||'连接器请求失败');return d}
 let connectorCatalog=[],capabilityAudit=null;
 async function connectorLoad(){const r=await connectorAPI('connectors/catalog');connectorCatalog=r.entries;return r}
 async function connectorExecute(doc,node,s){await connectorLoad();const entry=connectorCatalog.find(e=>e.id===node.atomId);let params;try{params=JSON.parse(node.config||JSON.stringify(entry.defaults))}catch{throw Error('连接器参数不是有效JSON，请使用“配置连接器”编辑')}

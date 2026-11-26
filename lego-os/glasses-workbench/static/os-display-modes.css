@@ -1,0 +1,323 @@
+.os-display {
+  min-height: var(--os-screen-height, 800px);
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+.os-overlay, .os-display #modal.device-dialog[open] {
+  height: var(--os-screen-height, 800px);
+  max-height: var(--os-screen-height, 800px);
+}
+.os-display #modal.device-dialog[open],
+.lego-home, .lego-system-layer { width: var(--os-screen-width, 600px); }
+.lego-home, .lego-system-layer { height: var(--os-screen-height, 800px); }
+.lego-system-layer .lego-voice-panel { width: calc(var(--os-screen-width, 600px) - 48px); }
+.os-frame .edge-up, .os-frame .edge-down { left: calc(50% - 36px); }
+.os-frame .edge-left, .os-frame .edge-right { top: calc(50% - 36px); }
+.os-frame .lego-space-track { left: 50%; transform: translateX(-50%); }
+.os-frame .lego-island { left: calc(50% - 160px); }
+body[data-os-orientation="landscape"] .sv-widget-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+
+/* Published portrait designs retain their authored coordinates in either display mode. */
+body[data-os-orientation="landscape"] .os-display > .face-scene { zoom:.75; margin-inline:auto; }
+body[data-os-orientation="landscape"] .os-display .sv-layout,
+body[data-os-orientation="landscape"] .os-display .sv-viewport { margin-inline: auto; }
+
+.os-top { gap:12px; padding-inline:16px; }
+.os-top > a, .os-top > b { white-space:nowrap; }
+.display-options { display:flex; justify-content:flex-end; gap:6px; min-width:0; }
+.display-options select { min-width:0; max-width:100%; min-height:32px; padding:3px 6px; color:#161c1b; background:#fff; }
+#display-environment-status { position:relative; z-index:2; margin:0; padding:6px 10px; border-radius:6px; background:#fff; }
+@media (max-width: 430px) {
+  .os-top { gap:5px; padding-inline:8px; }
+  .os-top > b { display:none; }
+}
+.display-environment { position:absolute; inset:0; overflow:hidden; z-index:0; background:#101110; }
+.display-environment canvas, .display-environment video { display:block; width:100%; height:100%; }
+.display-environment video { object-fit:cover; }
+.display-environment canvas { touch-action:none; cursor:grab; }
+.display-environment canvas:active { cursor:grabbing; }
+.display-environment .scene-credit {
+  position:absolute; left:8px; bottom:8px; padding:4px 8px;
+  border-radius:4px; color:white; background:#111c; font:11px system-ui;
+}
+.os-layout > .os-stage { position:relative; }
+body[data-os-scene] .os-device { isolation:auto; background:none; border-color:transparent; box-shadow:none; pointer-events:none; }
+body[data-os-scene] .os-device::after,
+body[data-os-scene] .device-pcb,
+body[data-os-scene] .device-screw,
+body[data-os-scene] .device-brand { visibility:hidden; }
+/* Apply the tint to each component so its backdrop can sample the live scene. */
+.os-frame {
+  --optic-surface:rgb(244 249 255 / 19%);
+  --optic-tray:rgb(244 249 255 / 23%);
+  --optic-control:rgb(244 249 255 / 16%);
+  --optic-focus:rgb(193 175 255 / 30%);
+  --optic-text:#fff;
+  --optic-muted:#fff;
+  --optic-edge:inset 0 4px 13px -8px #fff9;
+  --optic-blur:blur(5px) saturate(1.08);
+  --optic-halo:0 1px 2px #16243e, 0 2px 8px #16243eba;
+}
+.os-frame .os-display .board-content .os-widget-owner { display:contents; }
+.os-frame .os-display .board-content :is(.sv-widget.small,.lego-dashboard-pending) {
+  box-sizing:border-box;
+  block-size:260px;
+  min-block-size:260px;
+  max-block-size:260px;
+  min-inline-size:0;
+  margin:0;
+  overflow:hidden;
+}
+.os-frame .os-display .board-content :is(.sv-widget,.lego-dashboard-pending) {
+  background:var(--optic-surface)!important;
+  backdrop-filter:var(--optic-blur);
+  color:var(--optic-text)!important;
+}
+.os-frame :is(.os-display,.kai-hud,.message-hud) :where(
+  h1,h2,h3,p,b,strong,span,small,time,dt,dd,label,button,a,input,select,textarea
+):not(.face-scene *,.sv-layer,.sv-layer *) {
+  color:var(--optic-text)!important;
+  text-shadow:var(--optic-halo);
+}
+.os-frame .os-display :is(select option,select optgroup) { color:#fff; background:#2b2f3c; }
+body[data-os-scene] .os-device .os-frame {
+  border-color:transparent;
+  box-shadow:none;
+  background:transparent;
+  z-index:auto;
+  pointer-events:auto;
+}
+body[data-os-scene] .os-display.sv-screen,
+body[data-os-scene] .os-display > :is(.lego-home,.face-scene) {
+  background:transparent!important;
+}
+.os-frame :is(
+  .sv-widget,.lego-dashboard-pending,.os-app-selection,
+  .sv-course,.sv-task,.sv-hero,.sv-post,.sv-post-excerpt,.stream-detail,.stream-comments,
+  .video-card,.video-tile,.control-adjuster,.control-media,.weather-current,
+  .weather-forecast-list li,.weather-facts div,.sv-answer,.service-refresh-progress,
+  .system-push,.v2-system-panel section,.handoff-card,.handoff-option
+) {
+  background:var(--optic-surface)!important;
+  color:var(--optic-text);
+  box-shadow:var(--optic-edge);
+  backdrop-filter:var(--optic-blur);
+  text-shadow:var(--optic-halo);
+}
+.os-frame :is(.os-status,.os-status button,.lego-island,.lego-home-clock) {
+  background:transparent!important;
+  color:#fff!important;
+  border-color:transparent!important;
+  text-shadow:var(--optic-halo);
+}
+.lego-home-clock > span { color:#fff; }
+.os-frame .lego-island > i { background:#a791ff; }
+.os-frame .lego-island.island-priority > i { background:#ffc26c; }
+body[data-os-scene] .os-display :is(.os-page-surface,.os-overlay) {
+  background:transparent;
+  backdrop-filter:none;
+}
+.os-frame .os-display .os-overlay section,
+.os-frame #cursor-navigation {
+  background:var(--optic-surface);
+  color:var(--optic-text);
+  backdrop-filter:var(--optic-blur);
+}
+body[data-os-scene] .os-display :is(.weather-current,.sv-post-excerpt,.stream-detail,.stream-comments) {
+  padding:14px 18px;
+  border-radius:18px;
+}
+body[data-os-scene] .os-display .os-page-surface > :is(h1,h2) {
+  color:#fff;
+  background:none;
+  text-shadow:var(--optic-halo);
+}
+body[data-os-scene] .os-display :is(.weather-forecast-list li,.weather-facts div) {
+  border:0;
+  border-radius:12px;
+  margin-bottom:4px;
+  padding-inline:10px;
+}
+.os-frame :is(.os-display,.lego-voice-panel) :where(
+  button:not(.os-app-orb,.lego-edge,.lego-voice-launch,.sv-layer,.lego-mini-widget,.os-status button),
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),select,textarea
+) {
+  background-color:var(--optic-control)!important;
+  color:var(--optic-text)!important;
+}
+.os-frame :is(.lego-home-tray,.sv-widget,.sv-hero,.sv-course,.sv-task,.sv-post,.video-card,.video-tile,.weather-facts,.weather-forecast-list)
+  :is(p,small,dt,.course-copy strong) {
+  color:var(--optic-muted);
+}
+body[data-os-scene] .os-display #modal.device-dialog[open] {
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%);
+  width:min(calc(100% - 56px),550px);
+  height:auto;
+  max-height:72%;
+  background:var(--optic-surface)!important;
+}
+body[data-os-scene] .os-display #modal .dialoghead { background:var(--optic-surface); }
+body[data-os-scene] .os-display .device-focus:not(.os-app-orb,.weather-forecast,.lego-mini-widget) {
+  outline:3px solid #a5e5ff!important;
+  box-shadow:none!important;
+}
+body[data-os-scene] .os-display .weather-forecast.device-focus h1 {
+  text-decoration-color:#a088ff;
+}
+body[data-os-scene] .os-display .lego-edge i { background:#d6edfc; }
+
+.weather-app { padding-bottom:36px; }
+.weather-app h1 { margin:4px 0 12px; font-size:40px; }
+.weather-summary header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.weather-summary header button { min-width:56px; padding:4px 10px; border-radius:15px; }
+.weather-current { display:flex; align-items:center; gap:24px; margin:8px 0 22px; }
+.weather-current div { display:grid; gap:3px; }
+.weather-current strong { font-size:78px; font-weight:550; line-height:1; }
+.weather-current span { font-size:25px; }
+.weather-forecast-actions { display:grid; gap:14px; grid-template-columns:1fr 1fr; }
+.os-display .weather-forecast-actions button { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:13px 16px; text-align:left; font-size:25px; border-radius:16px; line-height:1.2; min-height:64px; }
+.weather-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 18px; margin:20px 0 0; }
+.weather-facts div { border-top:1px solid #343434; padding-top:6px; }
+.weather-facts dt { font-size:21px; color:#bcbcbc; }
+.weather-facts dd { margin:0; font-size:26px; }
+.weather-forecast-list { list-style:none; margin:0; padding:0; }
+.weather-forecast-list li { display:grid; grid-template-columns:2.9em 30px 1fr auto auto; align-items:center; gap:12px; font-size:23px; min-height:68px; border-bottom:1px solid #363636; }
+.weather-forecast-list li b { white-space:nowrap; }
+.os-display .weather-forecast-list small { font-size:20px; color:#cfcfcf; white-space:nowrap; }
+.os-display .weather-forecast:is(:focus,.device-focus) { outline:none!important; }
+.os-display .weather-forecast.device-focus h1 { text-decoration:underline #ff641f 3px; text-underline-offset:8px; }
+
+.os-layout { grid-template-rows:minmax(0,1fr) auto; height:calc(100dvh - 58px); }
+.os-layout > .os-stage { min-width:0; min-height:0; justify-content:safe center; }
+.os-controller-dock {
+  grid-column:1 / -1;
+  display:flex;
+  justify-content:center;
+  padding:8px 12px max(8px, env(safe-area-inset-bottom));
+  background:#f2f7f5;
+  border-top:1px solid #c8d7d2;
+}
+.os-controller-dock .device-gamepad { box-sizing:border-box; max-width:430px; }
+@media (max-width:1050px) {
+  .os-layout > aside.os-side:last-of-type { display:none; }
+}
+@media (max-width:650px) {
+  .os-layout {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr) auto;
+  }
+}
+
+.os-display:has(> .os-app-cluster) {
+  overflow:hidden;
+}
+#display-app-samples {
+  position:absolute;
+  right:10px;
+  top:10px;
+  z-index:3;
+  border:1px solid #b8c9c2;
+  border-radius:16px;
+  padding:5px 10px;
+  background:#f4f8f6;
+  color:#1c3028;
+  font-size:12px;
+}
+#display-app-samples[aria-pressed="true"] {
+  background:#1f5446;
+  color:#fff;
+}
+.os-app-cluster {
+  --app-diameter:160px;
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+.os-display .os-app-orb {
+  --orb-base:#283241;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--app-diameter);
+  height:var(--app-diameter);
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:#fff;
+  background:transparent;
+  transform:translate(calc(-50% + var(--orbit-x)),calc(-50% + var(--orbit-y))) scale(var(--orbit-scale));
+  transition:transform 260ms cubic-bezier(.22,.8,.28,1);
+  z-index:var(--orbit-order);
+}
+.os-display .orb-weather { --orb-base:#2863a5; }
+.os-display .orb-calendar { --orb-base:#34564b; }
+.os-display .orb-reddit { --orb-base:#ff4500; }
+.os-display .orb-youtube { --orb-base:#ff0033; }
+.os-display .orb-video { --orb-base:#453652; }
+.os-display .orb-external { --orb-base:#574838; }
+.os-display .orb-chat { --orb-base:#4a41b4; }
+.os-display .orb-travel { --orb-base:#186b72; }
+.os-display .orb-shop { --orb-base:#b64a19; }
+.os-display .orb-sample-0 { --orb-base:#426b69; }
+.os-display .orb-sample-1 { --orb-base:#535b89; }
+.os-display .orb-sample-2 { --orb-base:#80564d; }
+.os-display .orb-sample-3 { --orb-base:#3a638c; }
+.os-display .orb-sample-4 { --orb-base:#676347; }
+.os-app-orb-icon {
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  background:var(--orb-base);
+  border-radius:50%;
+  overflow:hidden;
+}
+.os-app-orb-icon img { width:53%; height:53%; object-fit:contain; }
+.orb-weather .os-app-orb-icon img { width:94%; height:94%; }
+.orb-youtube .os-app-orb-icon img { width:100%; height:100%; }
+.orb-reddit .os-app-orb-icon img { width:100%; height:100%; }
+.os-app-selection {
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  z-index:40;
+  max-width:174px;
+  padding:5px 15px;
+  border-radius:16px;
+  background:#303e4a;
+  color:#fff;
+  font-size:25px;
+  font-weight:550;
+  line-height:1.3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.os-display .os-app-orb:is(:hover,:focus-visible,.device-focus) {
+  background:transparent;
+  outline:none!important;
+  box-shadow:none!important;
+}
+.os-app-orb:focus-visible:not([data-centered]) .os-app-orb-icon {
+  box-shadow:inset 0 0 0 4px #ff793d;
+}
+@media (prefers-reduced-motion:reduce) {
+  .os-display .os-app-orb { transition:none; }
+}
+
+.handoff-page { display:grid; gap:14px; padding:8px 0 24px; }
+.handoff-page > h1 { color:#fff; margin:0 0 9px; text-shadow:var(--optic-halo); }
+.handoff-card,.handoff-option { padding:18px; border-radius:20px; }
+.handoff-card { display:grid; gap:14px; }
+.handoff-card label { display:grid; gap:6px; font-size:23px; }
+.handoff-card :is(input,textarea,button) { min-height:50px; width:100%; font:inherit; }
+.handoff-option { display:flex; align-items:center; gap:15px; text-decoration:none; }
+.handoff-option > span:nth-child(2) { display:grid; flex:1; }
+.handoff-option small { color:var(--optic-muted); font-size:19px; }
+.handoff-preview:empty { display:none; }
+.handoff-preview p { display:grid; gap:8px; margin:0 0 12px; white-space:pre-wrap; }
+.handoff-preview a { display:inline-block; color:#4833aa; text-decoration:underline; }

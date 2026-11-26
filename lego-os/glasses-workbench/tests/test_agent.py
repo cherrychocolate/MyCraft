@@ -16,6 +16,14 @@ class AgentTests(unittest.TestCase):
   self.publish();items=a.catalog(server)
   for actions in [[{'type':'execute','serviceId':'school'}],[{'type':'run_service','serviceId':'missing'}],[{'type':'present_service','serviceId':'school','surface':'camera'}],[{'type':'service_action','serviceId':'school','action':'route','value':'javascript:bad'}]]:
    with self.assertRaises(ValueError):a.validate(actions,items)
+ def test_provider_entry_never_accepts_model_urls(self):
+  self.assertEqual(a.validate([{'type':'present_entry','page':'travel','url':'https://example.invalid'}],[]),[{'type':'present_entry','page':'travel'}])
+  with self.assertRaises(ValueError):a.validate([{'type':'present_entry','page':'payment'}],[])
+ def test_videos_only_use_an_installed_official_youtube_service(self):
+  action={'type':'search_videos','serviceId':'youtube','query':' AI ','ranking':'recent_popular'}
+  item={'id':'youtube','releaseId':'v1','officialYouTube':True}
+  self.assertEqual(a.validate([action],[item])[0]['query'],'AI')
+  with self.assertRaises(ValueError):a.validate([action],[{**item,'officialYouTube':False}])
  def test_receipts_are_bound_to_session_and_fact_bodies_not_logged(self):
   self.publish();r=a.turn(server,{'text':'Read my planner'},self.gen([{'type':'run_service','serviceId':'school'}]));ident=r['actions'][0]['id']
   with self.assertRaisesRegex(ValueError,'尚未全部'):a.turn(server,{'text':'next','sessionId':r['sessionId']},self.gen())

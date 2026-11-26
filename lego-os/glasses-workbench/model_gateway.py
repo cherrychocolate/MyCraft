@@ -3,15 +3,19 @@ import json,time,uuid,threading,urllib.request,urllib.parse,urllib.error,os,sock
 from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
 import model_stream,qwen_realtime,agent_backend,speech_gateway,youtube_connector,service_connectors
 import server,connections,model_vault,voice_backend,os_backend,watchface_core,watchface_tasks,design_media,creative_assets,external_connectors,capability_audit,glasses_policy
-BASES={**server.PROVIDERS,'Kimi':'https://api.moonshot.ai/v1'}
+BASES={**server.PROVIDERS,'Kimi':'https://api.moonshot.ai/v1','Grok':'https://api.x.ai/v1'}
 ROLES={'design':'服务设计','chat':'OS 对话','reasoning':'复杂推演','vision':'视觉审查','image':'图片生成'}
 SESSION=model_vault.MemoryVault();VAULT=model_vault.KeychainVault() if os.sys.platform=='darwin' else model_vault.EnvironmentVault();LOCK=threading.RLock();JOBS={}
-LEGACY='http://127.0.0.1:8765';PORT=8766
+WORKBENCH_PORT=8765
+PORT=8766
+
+def workbench_url(host='127.0.0.1'):
+ return f'http://{host}:{WORKBENCH_PORT}'
 class ModelError(ValueError):
  def __init__(self,code,message,hint=''):super().__init__(message);self.code=code;self.hint=hint
 
 def legacy(path,payload=None):
- req=urllib.request.Request(LEGACY+'/api/'+path,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
+ req=urllib.request.Request(workbench_url()+'/api/'+path,data=json.dumps(payload).encode() if payload is not None else None,headers={'Content-Type':'application/json'})
  try:
   with urllib.request.urlopen(req,timeout=90 if payload else 3) as r:return json.load(r)
  except urllib.error.HTTPError as e:
@@ -221,13 +225,13 @@ class Handler(BaseHTTPRequestHandler):
  def guard(self):
   host=self.headers.get('Host','');origin=self.headers.get('Origin')
   if host not in (f'127.0.0.1:{self.server.server_port}',f'localhost:{self.server.server_port}'):raise ModelError('host','只允许本机访问')
-  if origin and origin not in ('http://127.0.0.1:8765','http://localhost:8765',f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'):raise ModelError('origin','不允许此来源访问模型配置')
+  if origin and origin not in (workbench_url(),workbench_url('localhost'),f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'):raise ModelError('origin','不允许此来源访问模型配置')
  def send(self,d,status=200):
   body=json.dumps(d,ensure_ascii=False).encode();self.send_response(status);self.send_header('Content-Type','application/json; charset=utf-8');self.send_header('Cache-Control','no-store');origin=self.headers.get('Origin')
-  if origin in ('http://127.0.0.1:8765','http://localhost:8765',f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'):self.send_header('Access-Control-Allow-Origin',origin);self.send_header('Vary','Origin')
+  if origin in (workbench_url(),workbench_url('localhost'),f'http://127.0.0.1:{self.server.server_port}',f'http://localhost:{self.server.server_port}'):self.send_header('Access-Control-Allow-Origin',origin);self.send_header('Vary','Origin')
   self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
  def do_OPTIONS(self):
-  try:self.guard();self.send_response(204);self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin','http://127.0.0.1:8765'));self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS');self.send_header('Access-Control-Allow-Headers','Content-Type');self.end_headers()
+  try:self.guard();self.send_response(204);self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin',workbench_url()));self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS');self.send_header('Access-Control-Allow-Headers','Content-Type');self.end_headers()
   except Exception as e:self.send({'error':str(e)},403)
  def do_GET(self):
   try:
@@ -241,7 +245,7 @@ class Handler(BaseHTTPRequestHandler):
    if path=='/api/models/voice/audio':
     ident=urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get('id',[''])[0];audio=voice_backend.AUDIO.get(ident)
     if not audio or time.time()-audio['at']>1800:return self.send({'error':'语音已过期，请重新合成'},404)
-    self.send_response(200);self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin','http://127.0.0.1:8765'));self.send_header('Vary','Origin');self.send_header('Content-Type',audio['mime']);self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(audio['bytes'])));self.end_headers();self.wfile.write(audio['bytes']);return
+    self.send_response(200);self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin',workbench_url()));self.send_header('Vary','Origin');self.send_header('Content-Type',audio['mime']);self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(audio['bytes'])));self.end_headers();self.wfile.write(audio['bytes']);return
    if path=='/api/models/health':return self.send({'ok':True,'service':'model-gateway','version':1})
    if path=='/api/models/state':
     events=calls();return self.send({'profiles':[public(p,events) for p in profiles()],'routing':routes().get('routes',{}),'calls':events,'providers':BASES,'roles':ROLES,'storage':'macOS Keychain'})
@@ -308,7 +312,7 @@ class Handler(BaseHTTPRequestHandler):
    if path=='/api/models/agent/memory':return self.send(agent_backend.save_memory(server,p))
    if path=='/api/models/agent/cancel':return self.send(agent_backend.cancel(server,p))
    if path=='/api/models/agent/stream':
-    self.send_response(200);self.send_header('Content-Type','text/event-stream; charset=utf-8');self.send_header('Cache-Control','no-store');self.send_header('Connection','close');self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin','http://127.0.0.1:8765'));self.end_headers();self.close_connection=True
+    self.send_response(200);self.send_header('Content-Type','text/event-stream; charset=utf-8');self.send_header('Cache-Control','no-store');self.send_header('Connection','close');self.send_header('Access-Control-Allow-Origin',self.headers.get('Origin',workbench_url()));self.end_headers();self.close_connection=True
     def emit(kind,value):
      self.wfile.write(('event: '+kind+'\ndata: '+json.dumps(value,ensure_ascii=False)+'\n\n').encode());self.wfile.flush()
     try:
@@ -328,4 +332,10 @@ class Handler(BaseHTTPRequestHandler):
    self.send({'error':'未知请求'},404)
   except Exception as e:self.send({'error':str(e),'code':getattr(e,'code','request_failed'),'hint':getattr(e,'hint','')},400)
 if __name__=='__main__':
+ import argparse
+ parser=argparse.ArgumentParser()
+ parser.add_argument('--workbench-port',type=int,default=WORKBENCH_PORT)
+ args=parser.parse_args()
+ WORKBENCH_PORT=args.workbench_port
+ PORT=WORKBENCH_PORT+1
  os_backend.initialize(server.connect,server.ROOT);youtube_connector.initialize(server);external_connectors.initialize(server);external_connectors.recover(server);watchface_tasks.recover(server);creative_assets.recover(server);init();print('Model gateway ready on 127.0.0.1:'+str(PORT),flush=True);ThreadingHTTPServer(('127.0.0.1',PORT),Handler).serve_forever()

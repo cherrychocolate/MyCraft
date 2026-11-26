@@ -1,0 +1,362 @@
+.os-display .os-app-orb { transition:none; }
+.os-display .os-app-orb[data-orbit-travel] {
+  transition:transform 220ms cubic-bezier(.2,.75,.24,1);
+}
+
+/* The watch face and its shared tray sit on the same left edge. */
+.os-frame[data-home-page=true] {
+  --home-inset:max(40px, calc((var(--os-screen-width,600px) - 600px) / 2));
+  --home-bottom:72px;
+}
+.lego-home {
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:flex-start;
+  gap:18px;
+  padding:0 var(--home-inset) var(--home-bottom);
+}
+.lego-home .lego-home-clock {
+  position:static;
+  color:#fff;
+}
+.lego-home.layout-split .lego-home-clock { margin:64px 0 auto; }
+.lego-home-tray {
+  display:flex;
+  align-items:stretch;
+  gap:12px;
+  max-width:100%;
+  height:112px;
+}
+.lego-home-tray:has(.lego-mini-widget) { width:100%; }
+.lego-home[data-home-state=moving] .lego-home-tray { display:none; }
+.lego-home-tray .lego-mini-widget {
+  position:static;
+  flex:1;
+  width:auto;
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  height:100%;
+  margin:0;
+  border:0!important;
+  color:var(--optic-text)!important;
+  padding:13px 16px;
+}
+.lego-home-tray .lego-mini-widget :is(b,strong) { color:var(--optic-text); }
+.lego-home-tray .lego-mini-widget b { font-size:27px; }
+.lego-home-tray .lego-mini-widget small { color:var(--optic-muted); }
+.lego-home-tray .lego-mini-widget .g-icon { flex-shrink:0; }
+.os-frame .lego-home-tray .lego-mini-widget:is(:focus-visible,.device-focus) {
+  background:var(--optic-focus)!important;
+  outline:none!important;
+}
+
+.lego-voice-launch.kai-launch {
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  width:90px;
+  height:96px;
+  bottom:var(--home-bottom);
+  right:var(--home-inset);
+  border-radius:24px!important;
+  color:var(--optic-text);
+  pointer-events:auto;
+}
+.lego-home-tray .kai-launch {
+  position:relative;
+  flex:0 0 90px;
+  height:auto;
+  inset:auto;
+}
+.os-frame .lego-home-tray .lego-mini-widget {
+  background:var(--optic-surface)!important;
+  backdrop-filter:var(--optic-blur);
+  box-shadow:var(--optic-edge);
+}
+.lego-voice-launch.kai-launch.kai-glass {
+  --bevel:2px;
+  background:linear-gradient(142deg,#ecf8ff44,#f4f7ff21 50%,#fff1ed40)!important;
+  backdrop-filter:blur(2px) saturate(1.07) brightness(1.07);
+}
+.lego-voice-launch.kai-launch:focus-visible {
+  background:var(--optic-focus)!important;
+}
+.kai-standby-avatar {
+  display:grid; place-items:center; width:100%; height:100%;
+}
+.kai-launch[data-activity=updated] .kai-standby-avatar::after {
+  content:''; position:absolute; top:14px; right:14px; width:7px; height:7px;
+  border-radius:50%; background:#8154e2;
+}
+.kai-glass {
+  --bevel:3px;
+  position:relative;
+  display:grid;
+  place-items:center;
+  box-sizing:border-box;
+  border-radius:22%;
+  background:
+    linear-gradient(142deg,#ecf8ff35 0%,#f4f7ff0b 41%,#e2e9ff17 73%,#fff1ed26 100%);
+  box-shadow:inset 0 1px 2px #ffffff58,inset 0 0 2px 1px #edf7ff35,
+    inset 0 -3px 9px #e0e7f022,0 5px 16px #11152224;
+  backdrop-filter:blur(1.7px) saturate(1.07) brightness(1.04);
+}
+.kai-glass::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  padding:var(--bevel);
+  background:conic-gradient(from 12deg,
+    #f4fbffc4 0deg,#d4ffeece 48deg,#e8f5ff3b 98deg,
+    #fff2ccbf 151deg,#f2f0ff67 192deg,#ffc1e0c2 231deg,
+    #c0d6ff4d 281deg,#f7ffffd9 330deg,#f4fbffc4 360deg);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask-composite:exclude;
+}
+.kai-glass::after {
+  content:'';
+  position:absolute;
+  inset:var(--bevel);
+  border-radius:inherit;
+  box-shadow:inset 0 1px 1px #fff8,inset -1px -2px 3px #fff4;
+  pointer-events:none;
+}
+.kai-motion-stage {
+  position:absolute;
+  inset:8px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  pointer-events:none;
+}
+.kai-awake .kai-motion-stage { inset:20px; }
+.kai-character {
+  position:relative;
+  z-index:1;
+  display:block;
+  width:78%;
+  transform-origin:center;
+  pointer-events:none;
+}
+.kai-screen-reader {
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  clip-path:inset(50%); white-space:nowrap;
+}
+.kai-awake {
+  --bevel:4px;
+  width:300px;
+  height:300px;
+  justify-self:center;
+  align-self:center;
+  border-radius:52px;
+  overflow:hidden;
+  backdrop-filter:blur(2.4px) saturate(1.07) brightness(1.04);
+}
+
+.os-frame .lego-system-layer .kai-hud,
+body[data-os-scene] .os-frame .lego-system-layer .kai-hud {
+  position:absolute;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%);
+  display:grid;
+  grid-template-rows:minmax(300px,1fr) minmax(0,37%);
+  gap:16px;
+  width:min(calc(100% - 64px),560px);
+  height:calc(100% - 56px);
+  max-height:none;
+  padding:0;
+  margin:0;
+  background:transparent!important;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  overflow:visible;
+}
+.kai-content { display:flex; flex-direction:column; align-self:end; gap:6px; min-width:0; min-height:0; max-height:100%; overflow:auto; background:none; }
+.kai-conversation { display:flex; flex-direction:column; gap:9px; min-height:0; max-height:227px; overflow:auto; padding:3px; background:none; }
+.kai-bubble {
+  box-sizing:border-box;
+  flex-shrink:0;
+  width:fit-content;
+  max-width:93%;
+  padding:11px 15px;
+  margin:0;
+  border-radius:16px;
+  color:var(--optic-text);
+  backdrop-filter:var(--optic-blur);
+  box-shadow:var(--optic-edge);
+  font:500 26px/1.43 system-ui,sans-serif;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap;
+}
+.kai-bubble.kai-user { align-self:flex-end; background:var(--optic-focus); }
+.kai-bubble.kai-assistant { align-self:flex-start; background:var(--optic-tray); }
+.kai-hud :is(.agent-service,.agent-handoff,.agent-video-list) {
+  min-height:140px; flex:none; border:0; border-radius:15px;
+  color:var(--optic-text); background:var(--optic-tray); backdrop-filter:var(--optic-blur);
+  box-shadow:var(--optic-edge);
+}
+.kai-hud .agent-handoff {
+  min-height:0; padding:10px 14px;
+}
+.agent-handoff .handoff-inline { padding:0; gap:6px; }
+.agent-handoff .handoff-inline > h1 { font-size:25px; color:var(--optic-text); text-shadow:none; margin:0; }
+.agent-handoff .handoff-card { padding:0; background:none!important; box-shadow:none; backdrop-filter:none; }
+.agent-handoff .trip-edit { grid-template-columns:1fr 1fr; gap:7px; }
+.agent-handoff .trip-edit button { grid-column:1 / -1; }
+.agent-handoff .handoff-card :is(input,select,button) { min-height:38px; border:0; border-radius:9px; }
+.agent-handoff .trip-review { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:22px; }
+.trip-review small { flex:1 1 100%; color:var(--optic-muted); }
+.agent-video-list { max-height:193px; padding:9px; overflow:auto; }
+.kai-hud .agent-video-list { min-height:0; }
+.agent-video-list header,.agent-video-list button { display:flex; align-items:center; gap:9px; text-align:left; }
+.agent-video-list header { font-size:22px; padding:0 5px 8px; }
+.agent-video-list button { width:100%; min-height:69px; margin-bottom:6px; padding:5px; border:0; border-radius:10px; }
+.agent-video-list button > img { width:92px; aspect-ratio:16/9; object-fit:cover; border-radius:6px; }
+.agent-video-list button > span { display:grid; gap:3px; font-size:19px; }
+.agent-video-list button strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.agent-video-list button small { color:var(--optic-muted); font-size:15px; }
+.kai-hud .agent-video-list button.device-focus {
+  background:var(--optic-focus)!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+@media (forced-colors:active) {
+  .kai-hud .agent-video-list button.device-focus { outline:2px solid Highlight!important; outline-offset:-3px; }
+}
+body[data-os-orientation=landscape] .agent-video-list { max-height:152px; }
+.kai-hud .agent-service > header { border-color:#46537025; }
+.kai-hud .agent-service > header :is(small,button) { color:var(--optic-muted)!important; }
+.kai-hud .agent-service-body.sv-screen { color:var(--optic-text); background:none; }
+.kai-hud .agent-service-body { max-height:220px; }
+.kai-hud .agent-tools:empty,.kai-conversation:empty { display:none; }
+.kai-hud .agent-tools:not(:empty),.kai-hud .agent-notice {
+  width:fit-content; max-width:100%; border-radius:12px; margin:0; padding:5px 10px;
+  color:var(--optic-muted); background:var(--optic-tray); backdrop-filter:var(--optic-blur);
+}
+@media (prefers-reduced-motion:no-preference) {
+  .kai-bubble[data-turn] { animation:message-body-in 170ms ease-out both; }
+}
+body[data-os-orientation=landscape] .kai-conversation { max-height:175px; }
+
+/* User controls sit below the physical view, together with the simulated controller. */
+.os-controller-dock { flex-direction:column; align-items:center; gap:4px; }
+.kai-dock-controls { width:min(100%,580px); display:grid; gap:5px; }
+.kai-dock-controls form { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; }
+.kai-dock-controls input {
+  min-width:0; min-height:34px; margin:0; padding:5px 9px; border:1px solid #bbcac5;
+  border-radius:9px; background:#fff; color:#182820; font-size:13px;
+}
+.kai-dock-actions,.kai-dock-actions .agent-session-controls { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:5px; }
+.kai-dock-controls button,.kai-dock-actions .agent-session-controls button {
+  min-height:27px; padding:4px 9px; border:1px solid #b7cac2; border-radius:9px;
+  background:#fff; color:#234238; font:550 11px/1.1 system-ui,sans-serif;
+}
+.kai-dock-controls form button { background:#254d42; border:0; color:#fff; font-size:12px; }
+.kai-dock-controls button:disabled { opacity:.42; }
+.kai-dock-status { font:550 11px/1 system-ui,sans-serif; color:#254d42; white-space:nowrap; }
+@media (min-width:1020px) {
+  .os-controller-dock { flex-direction:row; gap:28px; }
+  .kai-dock-controls { width:min(42%,580px); }
+}
+
+/* Notifications progress from peripheral hint to centered content to a brief receipt. */
+.message-hud {
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  z-index:33;
+}
+.message-hud[data-message-stage=edge] {
+  inset:106px 23px auto auto;
+  place-items:start end;
+}
+.message-hud button { pointer-events:auto; }
+.message-edge-button,.message-card,.message-receipt,.message-caption {
+  border:0;
+  color:var(--optic-text);
+  background:var(--optic-tray);
+  backdrop-filter:var(--optic-blur);
+  box-shadow:var(--optic-edge);
+}
+.message-edge-button {
+  min-height:69px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:11px 16px;
+  border-radius:18px;
+  text-align:left;
+}
+.message-edge-button span { display:grid; gap:2px; }
+.message-edge-button b { font-size:25px; }
+.message-edge-button small { font-size:18px; color:var(--optic-muted); }
+.message-edge-button.device-focus,.message-actions button.device-focus {
+  outline:none!important;
+  background:var(--optic-focus);
+}
+@media (forced-colors:active) {
+  .os-frame .lego-home-tray .lego-mini-widget:is(:focus-visible,.device-focus),
+  .message-edge-button.device-focus,.message-actions button.device-focus { outline:2px solid Highlight!important; }
+}
+.message-card {
+  width:min(calc(100% - 80px),490px);
+  pointer-events:auto;
+  border-radius:23px;
+  padding:23px 26px;
+  box-sizing:border-box;
+}
+.message-card header { display:flex; align-items:center; gap:12px; font-size:32px; }
+.message-card p { margin:17px 0 22px; font:500 27px/1.46 system-ui,sans-serif; overflow-wrap:anywhere; }
+.message-actions { display:flex; justify-content:flex-end; gap:12px; }
+.message-actions button {
+  min-height:58px; padding:8px 18px; border:0; border-radius:13px;
+  background:var(--optic-control); color:var(--optic-text); font-size:25px; font-weight:550;
+}
+.message-actions .message-primary { background:var(--optic-focus); color:var(--optic-text); }
+.message-compose { display:grid; gap:14px; justify-items:center; }
+.message-caption { display:grid; gap:5px; padding:11px 19px; border-radius:15px; text-align:center; font-size:24px; }
+.message-caption span { color:var(--optic-muted); font-size:21px; }
+.message-receipt {
+  display:flex; align-items:center; gap:10px; border-radius:16px; padding:14px 20px; font-size:24px;
+}
+.message-hud[data-arrived] .message-card { animation:message-center 245ms cubic-bezier(.2,.8,.24,1) both; }
+.message-hud[data-arrived] .message-edge-button,.message-hud[data-arrived] .message-compose {
+  animation:message-body-in 180ms ease-out both;
+}
+.message-hud[data-arrived] .message-receipt { animation:message-receipt 1800ms ease both; }
+@keyframes message-center {
+  from { opacity:.2; transform:translate(95px,-40px) scale(.89); }
+  to { opacity:1; transform:translate(0,0) scale(1); }
+}
+@keyframes message-body-in { from { transform:translateY(7px); } to {transform:none} }
+@keyframes message-receipt { 0% { opacity:.25; transform:translateY(6px) } 12%,82% {opacity:1; transform:none} 100% {opacity:0; transform:translateY(5px)} }
+@media (prefers-reduced-motion:reduce) {
+  .kai-character,.message-hud[data-arrived] > * { animation:none!important; }
+  .os-display .os-app-orb[data-orbit-travel] {transition:none;}
+}
+
+/* An active conversation leaves the scene in view and puts the previous OS surface away. */
+.os-frame:has(.kai-hud) .os-display,
+.os-frame:has(.message-hud[data-message-stage=compose]) .os-display {
+  background:transparent!important;
+}
+.os-frame:has(.kai-hud) .os-display > :not(#modal[open]),
+.os-frame:has(.message-hud[data-message-stage=compose]) .os-display > :not(#modal[open]),
+.os-frame:has(.message-hud[data-message-stage=compose]) .lego-system-layer {
+  visibility:hidden;
+  pointer-events:none;
+}
+.os-frame:has(.kai-hud) .service-refresh-progress,
+.os-frame:has(.kai-hud) #cursor-navigation,
+.os-frame:has(.kai-hud) .message-hud[data-owns-focus=false] { visibility:hidden; }

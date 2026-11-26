@@ -25,6 +25,14 @@ class Tests(unittest.TestCase):
    self.assertEqual(call.call_count,1);self.assertTrue(b['cached']);self.assertEqual(a['items'][0]['title'],'A & B')
    yt.search(self.s,self.v,{'query':'VR'});self.assertEqual(call.call_count,2)
    yt.search(self.s,self.v,{'query':'AR','refresh':True});self.assertEqual(call.call_count,3)
+ def test_recent_popular_uses_a_separate_cache_and_official_filters(self):
+  with patch.object(yt,'request',return_value={'items':[]}) as call:
+   yt.search(self.s,self.v,{'query':'AI'})
+   feed=yt.search(self.s,self.v,{'query':'AI','ranking':'recent_popular'})
+   self.assertEqual(call.call_count,2)
+   self.assertEqual(feed['ranking'],'recent_popular')
+   self.assertEqual(call.call_args.args[2]['order'],'viewCount')
+   self.assertRegex(call.call_args.args[2]['publishedAfter'],r'^20\d\d-\d\d-\d\dT00:00:00Z$')
  def test_failure_does_not_overwrite_cache(self):
   with patch.object(yt,'request',return_value={'items':[]}):yt.search(self.s,self.v,{'query':'AR'})
   with patch.object(yt,'request',side_effect=ValueError('quota exceeded')):

@@ -1,0 +1,84 @@
+.os-geo-icon {
+  display:inline-block;
+  position:relative;
+  width:var(--geo-size);
+  height:var(--geo-size);
+  flex:none;
+  vertical-align:middle;
+  isolation:isolate;
+}
+.os-geo-icon i { position:absolute; display:block; }
+.os-app-orb-icon > .os-geo-icon { width:62%; height:62%; }
+
+/* The marks use filled shapes, with small secondary planes for depth. */
+.g-calendar.os-geo-icon i:first-child { inset:19% 4% 7%; border-radius:21%; background:#7363e9; }
+.g-calendar.os-geo-icon i:nth-child(2) { inset:15% 4% 63%; border-radius:11% 11% 0 0; background:#483bbe; }
+.g-calendar.os-geo-icon i:last-child {
+  inset:47% 27% 22%;
+  background:radial-gradient(circle at 26% 24%,#fff 14%,transparent 16%),
+    radial-gradient(circle at 76% 24%,#b8f1f4 14%,transparent 16%),
+    radial-gradient(circle at 26% 76%,#b8f1f4 14%,transparent 16%);
+}
+.g-sun.os-geo-icon i:first-child {
+  inset:7%; border-radius:50%; background:#ffc759;
+  box-shadow:inset -3px -4px 0 #f5a52a;
+}
+.g-sun.os-geo-icon i:nth-child(2) { inset:20% 42% 47% 21%; border-radius:50%; background:#fff0a8; }
+.g-moon.os-geo-icon i:first-child {
+  inset:7%; border-radius:50%; background:#8268e8;
+  mask:radial-gradient(circle at 74% 23%,transparent 42%,#000 44%);
+}
+.g-moon.os-geo-icon i:nth-child(2) { inset:14% 12% 62% 64%; background:#ffcb65; transform:rotate(45deg) scale(.7); }
+.os-geo-icon:is(.g-cloud,.g-rain,.g-snow) i:first-child {
+  inset:9% 17% 27%; border-radius:50%; background:#8dcaf4;
+}
+.os-geo-icon:is(.g-cloud,.g-rain,.g-snow) i:nth-child(2) {
+  inset:35% 1% 24%; border-radius:38% 48% 40% 42%; background:#6e8ee9;
+}
+.g-rain.os-geo-icon i:last-child { inset:76% 46% 5% 35%; border-radius:45% 55% 55% 40%; background:#44a8f1; transform:rotate(24deg); }
+.g-snow.os-geo-icon i:last-child { inset:77% 24% 4% 57%; border-radius:23%; background:#8be0ef; transform:rotate(45deg); }
+.g-drop.os-geo-icon i:first-child { inset:11% 20%; border-radius:58% 41% 66% 42%; background:#45a1ed; transform:rotate(27deg); }
+.g-drop.os-geo-icon i:nth-child(2) { inset:32% 47% 38% 35%; border-radius:50%; background:#a9e7ff; }
+.g-wind.os-geo-icon i:first-child { inset:20% 14% 53% 6%; background:#67c2bd; border-radius:55% 26%; transform:rotate(-9deg); }
+.g-wind.os-geo-icon i:nth-child(2) { inset:52% 5% 21% 17%; background:#428995; border-radius:28% 58%; transform:rotate(-8deg); }
+.g-news.os-geo-icon i:first-child { inset:18% 2% 10% 22%; border-radius:36% 31% 26% 32%; background:#ea81b3; }
+.g-news.os-geo-icon i:nth-child(2) { inset:7% 22% 23% 4%; border-radius:33%; background:#6856df; }
+.g-news.os-geo-icon i:last-child {
+  inset:30% 31% 47% 14%;
+  background:radial-gradient(circle at 22% 50%,#fff 14%,transparent 17%),radial-gradient(circle at 58% 50%,#ecdeff 14%,transparent 17%);
+}
+.g-pin.os-geo-icon i:first-child { inset:9% 14% 20%; border-radius:50% 50% 15% 50%; background:#376fe5; transform:rotate(45deg); }
+.g-pin.os-geo-icon i:nth-child(2) { inset:26% 34% 44%; border-radius:50%; background:#baffed; }
+.g-cube.os-geo-icon i:first-child { inset:3%; background:#ffb269; clip-path:polygon(50% 0,100% 24%,50% 52%,0 24%); }
+.g-cube.os-geo-icon i:nth-child(2) { inset:3%; background:#ed744c; clip-path:polygon(0 24%,50% 52%,50% 100%,0 75%); }
+.g-cube.os-geo-icon i:last-child { inset:3%; background:#c75166; clip-path:polygon(50% 52%,100% 24%,100% 75%,50% 100%); }
+.g-clock.os-geo-icon i:first-child { inset:5%; border-radius:50%; background:#6b54ca; }
+.g-clock.os-geo-icon i:nth-child(2) { inset:20% 18% 34% 45%; background:#eadcff; clip-path:polygon(0 0,28% 0,28% 69%,100% 69%,100% 100%,0 100%); }
+.g-arrow.os-geo-icon i:first-child { inset:12% 4%; background:#4b6be6; clip-path:polygon(0 34%,51% 34%,51% 0,100% 50%,51% 100%,51% 66%,0 66%); }
+.g-play.os-geo-icon i:first-child { inset:5%; border-radius:26%; background:#8c58dd; }
+.g-play.os-geo-icon i:nth-child(2) { inset:27% 20% 27% 35%; background:#fff5ff; clip-path:polygon(0 0,100% 50%,0 100%); }
+.g-check.os-geo-icon i:first-child { inset:6%; background:#258d75; border-radius:50%; }
+.g-check.os-geo-icon i:nth-child(2) { inset:21%; background:#cbfff1; clip-path:polygon(8% 45%,39% 62%,82% 16%,97% 30%,40% 92%,0 60%); }
+.g-bolt.os-geo-icon i:first-child { inset:4% 15%; background:#ffc64f; clip-path:polygon(62% 0,2% 59%,45% 59%,33% 100%,99% 39%,56% 39%,72% 0); }
+.g-voice.os-geo-icon i:first-child { inset:19% 16% 6%; border-radius:45% 45% 43% 44%; background:#8a74e7; }
+.g-voice.os-geo-icon i:nth-child(2) { inset:3% 30% 31%; border-radius:34%; background:#4145b5; }
+.g-voice.os-geo-icon i:last-child { inset:18% 40% 59%; border-radius:50%; background:#badafc; }
+.g-settings.os-geo-icon i:first-child {
+  inset:5%; background:#6259b7;
+  clip-path:polygon(35% 0,65% 0,73% 15%,90% 20%,100% 48%,88% 61%,91% 78%,67% 98%,50% 88%,33% 98%,9% 78%,12% 61%,0 48%,10% 20%,27% 15%);
+}
+.g-settings.os-geo-icon i:nth-child(2) { inset:33%; border-radius:50%; background:#b4d8fb; }
+.g-bell.os-geo-icon i:first-child { inset:8% 13% 22%; border-radius:46% 46% 19% 19%; background:#f1ab46; }
+.g-bell.os-geo-icon i:nth-child(2) { inset:74% 38% 7%; border-radius:50%; background:#cf7141; }
+.g-link.os-geo-icon i:first-child { inset:10% 15% 40% 43%; border-radius:31%; background:#54b4ae; transform:rotate(35deg); }
+.g-link.os-geo-icon i:nth-child(2) { inset:42% 42% 9% 15%; border-radius:31%; background:#518ad9; transform:rotate(35deg); }
+.g-image.os-geo-icon i:first-child { inset:7%; border-radius:24%; background:#5b78d8; }
+.g-image.os-geo-icon i:nth-child(2) { inset:40% 14% 16%; background:#abe7d3; clip-path:polygon(0 100%,35% 25%,52% 55%,78% 2%,100% 100%); }
+.g-image.os-geo-icon i:last-child { inset:19% 58% 58% 19%; border-radius:50%; background:#ffcf6d; }
+.g-home.os-geo-icon i:first-child { inset:7% 2% 8%; background:#4bbca4; clip-path:polygon(50% 0,100% 43%,86% 43%,86% 100%,14% 100%,14% 43%,0 43%); }
+.g-home.os-geo-icon i:nth-child(2) { inset:59% 39% 8%; border-radius:19% 19% 0 0; background:#e3fff7; }
+.g-book.os-geo-icon i:first-child { inset:15% 6% 12%; border-radius:18%; background:linear-gradient(to right,#515bc7 49%,#8176e4 50%); }
+.g-book.os-geo-icon i:nth-child(2) { inset:15% 18% 57% 67%; background:#ffc878; clip-path:polygon(0 0,100% 0,100% 100%,50% 69%,0 100%); }
+.g-grid.os-geo-icon i:first-child { inset:7% 53% 53% 7%; border-radius:28%; background:#7562e0; }
+.g-grid.os-geo-icon i:nth-child(2) { inset:7% 7% 53% 53%; border-radius:28%; background:#f4a863; }
+.g-grid.os-geo-icon i:last-child { inset:54% 7% 7%; border-radius:22%; background:#50adac; }
