@@ -26,7 +26,7 @@ for ident, label, category, output in [
 seed = list(atoms.values())
 installed = {}
 
-def service(template, label, graph, config, extra=None):
+def service(template, label, graph, config, extra=None, version=1):
     ident = 'trial-'+template
     nodes = [{'id':f'{ident}-node-{i}','atomId':atom,'snapshot':atoms[atom], 'x':70+i%3*250,
               'y':60+i//3*180,'mode':'required','config':''} for i,atom in enumerate(graph)]
@@ -35,7 +35,7 @@ def service(template, label, graph, config, extra=None):
     doc = {'id':ident,'name':label,'kind':'service','template':template,'description':label,
            'nodes':nodes,'edges':edges,'elements':[],'messages':[],'steps':[],
            'runtimeConfig':config,**(extra or {})}
-    release = {'id':ident+'-v1','sourceId':ident,'name':label,'version':1,'sourceRevision':1,
+    release = {'id':f'{ident}-v{version}','sourceId':ident,'name':label,'version':version,'sourceRevision':1,
                'mode':'service','publishedAt':0,'digest':ident,'snapshot':doc,'_kind':'release','_revision':1}
     seed.extend([{**doc,'_kind':'service','_revision':1},release])
     installed[ident]={'enabled':True,'releaseId':release['id']}
@@ -44,9 +44,10 @@ service('weather','深圳天气',['C04','F02','O07','O08'],{'locationName':'深�
 service('calendar','日程课表',['C02','F02','O07','O08','O09'],
         {'calendarMode':'live','calendarId':'workbench-calendar'},
         {'timetable':{'start':'2026-01-05','courses':[],'exceptions':[],'tasks':[]}})
-service('video','YouTube',['C_YOUTUBE_SEARCH','F03','O08','O09'],{},
+service('video','YouTube',['C_YOUTUBE_SEARCH','F03','O07','O08','O09'],{},
         {'videoConfig':{'query':'Tokyo Osaka travel','ranking':'relevance',
-                        'youtubeProvider':'official','channels':['youtube']}})
+                        'youtubeProvider':'official','channels':['youtube']},
+         'presentation':{'widgets':[{'id':'videos','kind':'feed','size':'medium'}]}},version=2)
 seed.append({'id':'os-state','_kind':'osstate','_revision':1,'installed':installed,'userdata':{},'widgets':[],
              'notifications':[],'watchface':{},'settings':{'homePinServiceId':'trial-calendar',
               'quickLaunchServiceId':'trial-weather','homeLayout':'lower','wifi':True,'bluetooth':True,

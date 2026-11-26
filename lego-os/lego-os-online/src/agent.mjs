@@ -78,7 +78,7 @@ function simpleReceipt(pending,receipts){
   return {answer:count?`${source}这段时间共有 ${count} 项安排。`:`${source}这段时间没有安排。`,actions:[]};
  }
  if(planned.at(-1).type==='search_videos')return {answer:`找到 ${last.result?.count||0} 条公开结果。`,actions:[]};
- if(planned.at(-1).type==='open_browser')return {answer:'浏览器已打开。',actions:[]};
+ if(planned.at(-1).type==='open_browser')return {answer:last.result?.mode==='external-link'?'浏览器已显示在独立标签页打开的入口。':'浏览器已打开。',actions:[]};
  return {answer:'已把对应时段的实际预报放在下面。',actions:[]};
 }
 export async function turn(env,owner,p){

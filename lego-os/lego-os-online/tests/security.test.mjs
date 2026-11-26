@@ -18,6 +18,7 @@ test('anonymous visitors see the simulator and sample data. The workbench stays 
   const r=runtime();t.after(r.close);
   const landing=await r.call('/',{user:null});
   assert.equal(landing.status,200);
+  assert.equal(landing.headers.get('Referrer-Policy'),'strict-origin-when-cross-origin');
   assert.match(await landing.text(),/os-shell\.js/);
   for(const path of ['/workbench','/index.html','/access','/api/export','/architecture/index.html']){
     assert.equal((await r.call(path,{user:null})).status,404,path);
@@ -30,6 +31,26 @@ test('anonymous visitors see the simulator and sample data. The workbench stays 
   assert.equal((await post(r,'/api/models/agent/turn',null,undefined,{text:'你好'})).status,401);
   assert.equal((await r.call('/workbench')).status,200);
   assert.equal((await r.call('/workbench',{user:'alice'})).status,404);
+});
+
+test('existing public installations receive the YouTube widget without rewriting the old release',async t=>{
+  const r=runtime();t.after(r.close);
+  const put=r.db.prepare('INSERT INTO documents(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)');
+  const owner='__preview';
+  const state={id:'os-state',installed:{'trial-video':{releaseId:'trial-video-v1',enabled:true}},settings:{brightness:75}};
+  const previous={id:'trial-video-v1',mode:'service',snapshot:{nodes:[]}};
+  put.run(owner,'__initialized','internal','{}',1,1);
+  put.run(owner,'os-state','osstate',JSON.stringify(state),7,1);
+  put.run(owner,previous.id,'release',JSON.stringify(previous),1,1);
+  const response=await r.call('/api/os',{user:null});
+  const updated=await response.json();
+  assert.equal(updated.revision,8);
+  assert.equal(updated.state.settings.brightness,75);
+  assert.equal(updated.state.installed['trial-video'].releaseId,'trial-video-v2');
+  const youtube=updated.releases.find(release=>release.id==='trial-video-v2');
+  assert.ok(youtube.snapshot.nodes.some(node=>node.atomId==='O07'));
+  assert.equal(youtube.snapshot.presentation.widgets[0].id,'videos');
+  assert.deepEqual(updated.releases.find(release=>release.id===previous.id).snapshot,previous.snapshot);
 });
 
 test('trial services require a matching signed simulator session and enforce the owner policy',async t=>{

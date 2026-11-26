@@ -1,7 +1,38 @@
 import {SEED} from './frozen.mjs';
 import {sanitize} from './security.mjs';
-const init=new Map();
-export async function initialize(db,owner){if(init.has(owner))return init.get(owner);const p=(async()=>{if(await db.prepare('SELECT id FROM documents WHERE owner=? AND id=?').bind(owner,'__initialized').first())return;for(let i=0;i<SEED.length;i+=60){await db.batch(SEED.slice(i,i+60).map(d=>db.prepare('INSERT OR IGNORE INTO documents(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)').bind(owner,d.id,d._kind,JSON.stringify(d),d._revision||1,Date.now()/1000)))}await db.prepare('INSERT OR IGNORE INTO documents(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)').bind(owner,'__initialized','internal','{}',1,Date.now()/1000).run()})();init.set(owner,p);try{await p}catch(e){init.delete(owner);throw e}}
+const initByDB=new WeakMap();
+const seedInsert='INSERT OR IGNORE INTO documents(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)';
+const builtInYouTube=SEED.find(doc=>doc.id==='trial-video-v2');
+const videoReleasePath='$.installed."trial-video".releaseId';
+
+async function prepareWorkspace(db,owner){
+ const now=Date.now()/1000;
+ const initialized=await db.prepare('SELECT id FROM documents WHERE owner=? AND id=?').bind(owner,'__initialized').first();
+ if(!initialized){
+  for(let i=0;i<SEED.length;i+=60){
+   await db.batch(SEED.slice(i,i+60).map(doc=>db.prepare(seedInsert)
+    .bind(owner,doc.id,doc._kind,JSON.stringify(doc),doc._revision||1,now)));
+  }
+  await db.prepare(seedInsert).bind(owner,'__initialized','internal','{}',1,now).run();
+  return;
+ }
+ const state=await get(db,owner,'os-state');
+ if(state?.installed?.['trial-video']?.releaseId!=='trial-video-v1')return;
+ await db.batch([
+  db.prepare(seedInsert).bind(owner,builtInYouTube.id,'release',JSON.stringify(builtInYouTube),1,now),
+  db.prepare('UPDATE documents SET body=json_set(body,?,?),revision=revision+1,updated=? WHERE owner=? AND id=? AND json_extract(body,?)=?')
+   .bind(videoReleasePath,builtInYouTube.id,now,owner,'os-state',videoReleasePath,'trial-video-v1')
+ ]);
+}
+
+export async function initialize(db,owner){
+ let init=initByDB.get(db);
+ if(!init){init=new Map();initByDB.set(db,init);}
+ if(!init.has(owner)){
+  init.set(owner,prepareWorkspace(db,owner).catch(error=>{init.delete(owner);throw error}));
+ }
+ return init.get(owner);
+}
 export async function docs(db,owner){return (await db.prepare("SELECT id,kind,body,revision FROM documents WHERE owner=? AND kind!='internal' ORDER BY updated DESC").bind(owner).all()).results.map(r=>({...JSON.parse(r.body),id:r.id,_kind:r.kind,_revision:r.revision}))}
 export async function get(db,owner,id){const r=await db.prepare('SELECT kind,body,revision FROM documents WHERE owner=? AND id=?').bind(owner,id).first();return r?{...JSON.parse(r.body),_kind:r.kind,_revision:r.revision}:null}
 export async function save(db,owner,d,kind,expected,env){if(!d||typeof d!=='object'||!d.id||String(d.id).length>160)throw Error('文档ID无效');const old=await get(db,owner,d.id);if(old&&expected!==old._revision)throw Error('内容已更新，请刷新后重试');const body={...sanitize(d,env)};delete body._kind;delete body._revision;const revision=(old?._revision||0)+1;if(old){const result=await db.prepare('UPDATE documents SET body=?,kind=?,revision=?,updated=? WHERE owner=? AND id=? AND revision=?').bind(JSON.stringify(body),kind,revision,Date.now()/1000,owner,d.id,old._revision).run();if(!result.meta.changes)throw Error('内容已在其他页面改变');await db.prepare('INSERT OR IGNORE INTO history(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)').bind(owner,d.id,old._kind,JSON.stringify(old),old._revision,Date.now()/1000).run()}else await db.prepare('INSERT INTO documents(owner,id,kind,body,revision,updated) VALUES(?,?,?,?,?,?)').bind(owner,d.id,kind,JSON.stringify(body),revision,Date.now()/1000).run();return {...body,_kind:kind,_revision:revision}}

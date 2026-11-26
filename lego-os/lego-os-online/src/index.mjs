@@ -78,6 +78,7 @@ export default {async fetch(req,env){
    if(path==='/workbench'&&!isOwner(user,env))throw forbidden();
    const asset=ASSETS[path==='/'?'/os.html':'/index.html'];
    const response=binary(bytes(asset.base64),asset.type);
+   response.headers.set('Referrer-Policy','strict-origin-when-cross-origin');
    const session=await pageSession(env,user);
    if(session)response.headers.append('Set-Cookie',session);
    response.headers.set('Permissions-Policy','microphone=(self), camera=(self), geolocation=(self)');

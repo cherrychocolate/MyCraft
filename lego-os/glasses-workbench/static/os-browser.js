@@ -8,6 +8,7 @@
   {name:'GitHub',url:'https://github.com/',mark:'GH',color:'#292532'},
   {name:'YouTube',url:'https://www.youtube.com/',mark:'▶',color:'#e33232'}
  ];
+ const opensInTab=host=>/(?:^|\.)(?:bing\.com|youtube\.com|youtu\.be)$/i.test(host);
  function normalize(value){
   let text=String(value||'').trim();if(!text)throw Error('请输入网址');
   if(!/^https?:\/\//i.test(text))text='https://'+text;
@@ -30,7 +31,12 @@
   position++;
   controlsOpen=false;
   window.LegoHomeUI?.closeVoice(false);osNavigate('browser');
-  return {url,opened:true,mode:'embedded-webview',limitation:'页面能否嵌入由网站决定，受限制时使用独立窗口打开'};
+  const separateTab=opensInTab(new URL(url).hostname);
+  return {url,opened:!separateTab,mode:separateTab?'external-link':'embedded-webview'};
+ }
+ function openFromClick(value){
+  const result=open(value);
+  if(result.mode==='external-link')window.open(result.url,'_blank','noopener');
  }
  function setControls(view,open){
   controlsOpen=open;
@@ -71,7 +77,16 @@
  }
  function render(){
   const url=current();
-  if(url)return webview(url);
+  if(url){
+   const {hostname}=new URL(url);
+   if(!opensInTab(hostname))return webview(url);
+   return `<section class="browser-app" aria-label="浏览器">
+    <header><h1>${esc(bookmarks.find(item=>new URL(item.url).hostname===hostname)?.name||hostname)}</h1>
+     <button type="button" data-browser="home">主页</button></header>
+    ${addressForm(url)}
+    <a class="handoff-option" href="${esc(url)}" target="_blank" rel="noopener" data-focus-default>在独立标签页打开 ↗</a>
+   </section>`;
+  }
   return `<section class="browser-app" aria-label="浏览器">
    <header><h1>浏览器</h1><button data-browser="voice" aria-label="语音输入网址或网站名称">${recording?'停止录音':'语音'}</button></header>
    ${addressForm()}
@@ -90,7 +105,7 @@
   input.oninput=()=>input.setCustomValidity('');
   form.onsubmit=event=>{
    event.preventDefault();
-   try{open(input.value)}
+   try{openFromClick(input.value)}
    catch(error){
     input.setCustomValidity(error.message);
     input.reportValidity();
@@ -98,7 +113,7 @@
   };
  };
  const click=osClick;osClick=async function(event){
-  const bookmark=event.target.closest('[data-browser-bookmark]');if(bookmark){open(bookmarks[Number(bookmark.dataset.browserBookmark)].url);return}
+  const bookmark=event.target.closest('[data-browser-bookmark]');if(bookmark){openFromClick(bookmarks[Number(bookmark.dataset.browserBookmark)].url);return}
   const button=event.target.closest('[data-browser]');if(!button)return click(event);
   const action=button.dataset.browser;
   if(action==='home'){position=-1;controlsOpen=false;renderOS()}
