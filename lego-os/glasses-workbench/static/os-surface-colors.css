@@ -1,0 +1,79 @@
+/* Apply the shared glass material to legacy OS surfaces. */
+.os-mode .os-side > button.active,
+.os-mode .os-side > button.active:hover,
+.os-mode #toast {
+  background: #e5e5e5;
+  color: #262626;
+}
+
+.os-mode .os-display :is(button,input,select,textarea) {
+  background-color: var(--optic-control);
+}
+
+.os-frame .os-display :is(
+  .os-status,.sv-hero,.os-service-shortcut,.sv-course,.sv-task,.sv-post,
+  .sv-widget,.widget-tasks,.widget-hourly,.widget-forecast,.os-widget-placeholder,
+  .sv-weather-now,.sv-weather-metrics > section,.sv-weather-chart,.sv-sun-track,
+  .sv-timeline-item,.sv-media-frame,.sv-source-link,.sv-video-link,.sv-answer,
+  .os-app-grid .os-app-tile,.device-slider-card,.device-media-card,.video-thumbnail,
+  .control-adjuster,.control-switches button,.lego-dashboard-pending
+) {
+  background-color: var(--optic-surface) !important;
+}
+
+.os-frame .os-display :is(nav,.os-page-surface) {
+  background-color: transparent;
+}
+
+.os-frame .os-display :is(button.os-app-orb,.browser-bookmarks button) {
+  background: transparent !important;
+}
+
+.os-frame .os-display :is(.os-overlay,.video-fullscreen-layer) {
+  background: var(--optic-control);
+}
+
+.os-frame .os-display .os-overlay > section,
+.os-frame .os-display #modal.device-dialog[open],
+.os-frame .os-display #modal .dialoghead,
+.os-frame #cursor-navigation,
+.os-frame .service-refresh-progress,
+.os-mode .system-push,
+.os-frame .lego-island {
+  background: var(--optic-surface) !important;
+  backdrop-filter: var(--optic-blur);
+}
+
+.os-frame .os-display #modal button,
+.os-frame #cursor-navigation button {
+  background: var(--optic-control) !important;
+}
+
+.os-frame .os-display .control-adjuster.is-adjusting,
+.os-frame .os-display .board-content :is(.sv-widget,.lego-dashboard-pending).device-focus {
+  background: var(--optic-focus) !important;
+}
+
+.os-frame .os-display .browser-controls {
+  /* Browser controls need enough contrast even over bright webpages. */
+  --optic-text: #262626;
+  --optic-halo: none;
+  --optic-control: rgb(255 255 255 / 44%);
+  --optic-focus: rgb(255 255 255 / 88%);
+  background: rgb(255 255 255 / 76%) !important;
+  color: var(--optic-text) !important;
+  backdrop-filter: var(--optic-blur);
+}
+
+.os-frame .os-display .browser-controls :is(button,a,#browser-address) {
+  background: var(--optic-control) !important;
+  color: var(--optic-text) !important;
+}
+
+.os-frame .os-display .browser-controls .device-focus,
+.os-frame .os-display .browser-controls :focus-visible {
+  background: var(--optic-focus) !important;
+}
+
+.os-mode .display-environment { background: #4a4a4a; }
+.os-mode .display-environment .scene-credit { background: rgb(67 67 67 / 82%); }

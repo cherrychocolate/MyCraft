@@ -1,0 +1,135 @@
+/* Content and spacing define hierarchy; the simulator has no divider strokes. */
+body :is(.os-top,.os-side,.os-controller-dock,.kai-dock-controls input,.kai-dock-controls button,.display-options select,#display-app-samples) {border:0!important;outline:none;box-shadow:none!important;}
+.os-display {--optic-edge:none;}
+.os-frame,.os-display *, .lego-system-layer *, .os-frame *::before,.os-frame *::after {border-color:transparent!important;outline:none!important;}
+.os-display :is(table,th,td,hr),.lego-system-layer :is(table,th,td,hr) {border:0!important;}
+.os-display hr,.lego-system-layer hr {display:none;}
+.os-frame :is(.sv-card,.sv-widget,.sv-screen,.weather-facts div,.weather-forecast-list li,.handoff-card,.os-app-orb,.os-app-orb-icon) {border:0!important;box-shadow:none!important;}
+.kai-hud [hidden] {display:none!important;}
+.kai-hud :is(.agent-service-body,.agent-video-list) {max-height:none;overflow:visible;}
+.kai-hud .agent-tools:empty {display:none;}
+/* App marks are independent of their translucent tile. */
+.os-display .os-app-orb-icon img {width:56%!important;height:56%!important;object-fit:contain;}
+.os-display .os-app-orb-icon > svg,.os-display .os-app-orb-icon > .os-geo-icon {width:56%;height:56%;}
+
+.os-display *, .lego-system-layer * {border-width:0!important;}
+:is(.os-display,.lego-system-layer) *:not(.kai-glass,.kai-hud :is(.kai-bubble,.agent-service,.agent-handoff,.agent-video-list)) {box-shadow:none!important;}
+.os-display :is(button,input,select,textarea).device-focus {background-color:var(--optic-focus)!important;}
+
+.kai-reply {display:flex;flex-direction:column;gap:14px;min-width:0;}
+.kai-hud .kai-reply :is(.agent-video-list,.agent-service,.agent-handoff) {position:static!important;inset:auto!important;flex:none!important;height:auto!important;max-height:none!important;min-height:0!important;margin:0;overflow:visible;}
+.kai-hud .agent-service-body.sv-screen {height:auto!important;max-height:none!important;overflow:visible!important;}
+
+/* Answer components use the assistant's frosted glass. */
+.kai-reply .agent-card {
+ min-width:0;
+ padding:10px 13px;
+ border-radius:15px;
+ background:var(--optic-tray);
+ backdrop-filter:var(--optic-blur);
+ color:var(--optic-text);
+ text-shadow:var(--optic-halo);
+ font:500 23px/1.28 system-ui,sans-serif;
+}
+.kai-hud .agent-card > header {
+ display:flex;
+ align-items:baseline;
+ justify-content:space-between;
+ gap:10px;
+ margin:0 0 5px;
+}
+.agent-card header strong {font-size:24px;}
+.agent-card header small,.agent-card-day > b {font-size:18px;white-space:nowrap;}
+.agent-card ul {list-style:none;margin:0;padding:0;display:grid;gap:4px;}
+.agent-card-row {
+ display:grid;
+ grid-template-columns:minmax(4em,max-content) minmax(0,1fr);
+ align-items:baseline;
+ gap:10px;
+}
+.agent-card-row > div,.agent-card-weather-now {
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:4px 9px;
+ min-width:0;
+}
+.agent-card-row time {font-size:19px;font-variant-numeric:tabular-nums;}
+.agent-card-row > div > span {font-size:20px;}
+.agent-card-day + .agent-card-day {margin-top:7px;}
+.agent-card-empty,.agent-card li p {margin:0;font-size:20px;}
+.kai-reply .agent-card a {padding:0;background:none;text-decoration:underline;}
+.kai-reply .agent-card-schedule {padding:15px 18px;border-radius:18px;}
+.kai-hud .agent-card-schedule > header {margin-bottom:12px;}
+.agent-card-schedule header strong {font-size:27px;}
+.agent-card-schedule .agent-card-day > b {display:block;margin-bottom:5px;font-size:20px;}
+.agent-card-schedule .agent-card-day + .agent-card-day {margin-top:15px;}
+.agent-card-schedule ul {gap:3px;}
+.agent-card-schedule .agent-card-row {
+ grid-template-columns:minmax(6.2em,max-content) minmax(0,1fr);
+ padding:6px 0;
+ gap:14px;
+}
+.agent-card-schedule .agent-card-row > div {display:grid;gap:2px;}
+.agent-card-schedule .agent-card-row strong {font-size:24px;}
+.agent-card-schedule .agent-card-row time,.agent-card-schedule .agent-card-row span {font-size:20px;}
+.kai-reply .agent-video-list {
+ padding:10px 13px;
+}
+.kai-reply .agent-video-list button {min-height:56px;margin:0;padding:4px;background:var(--optic-control);}
+
+.kai-reply a {color:var(--optic-text);text-decoration:underline;text-underline-offset:3px;background:var(--optic-control);border-radius:5px;padding:0 3px;overflow-wrap:anywhere;}
+.browser-app {display:flex;flex-direction:column;gap:18px;min-height:100%;box-sizing:border-box;padding:24px;color:var(--optic-text);}
+.browser-app header {display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.browser-app h1 {margin:0;font-size:34px;}
+.browser-app button,.browser-app a {background:var(--optic-control);color:var(--optic-text);border-radius:14px;padding:12px 16px;font-size:23px;text-decoration:none;}
+.browser-app button:disabled {opacity:.35;}
+#browser-address-form {display:flex;gap:10px;}
+#browser-address {width:0;flex:1;min-width:0;background:var(--optic-tray);color:var(--optic-text);padding:14px;border-radius:14px;font-size:23px;}
+.browser-app .browser-resume {align-self:flex-start;}
+.browser-bookmarks {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 18px;margin-top:18px;}
+.browser-bookmarks button {display:grid;justify-items:center;gap:12px;padding:0;background:none;font-size:23px;}
+.browser-bookmarks span {display:grid;place-items:center;aspect-ratio:1;width:96px;background:#fff;border-radius:28px;font-size:32px;font-weight:750;}
+.browser-bookmarks strong {font-size:23px;font-weight:550;}
+.browser-error {font-size:22px;color:#ffcbbd;}
+
+.os-display:has(.browser-webview) {padding:0!important;overflow:hidden;}
+.os-display .os-page-surface:has(> .browser-webview) {height:100%;}
+.browser-webview {position:relative;width:100%;height:100%;}
+.browser-page {display:block;width:100%;height:100%;border:0;background:#eaf2f6;}
+.os-display .browser-controls {
+ display:flex;
+ align-items:center;
+ gap:6px;
+ position:absolute;
+ inset:auto 0 0;
+ height:50px;
+ box-sizing:border-box;
+ padding:6px 10px;
+ margin:0;
+ z-index:2;
+}
+.browser-controls[hidden] {display:none!important;}
+.browser-controls #browser-address-form {flex:1;min-width:0;gap:6px;margin:0;align-items:center;}
+.os-display .browser-controls :is(button,a,input) {
+ box-sizing:border-box;
+ height:38px;
+ min-height:0;
+ padding:0 10px;
+ margin:0;
+ border-radius:9px;
+ font:500 20px/1.1 system-ui,sans-serif;
+ white-space:nowrap;
+}
+.browser-controls a {display:grid;place-items:center;text-decoration:none;}
+.browser-controls button:disabled {opacity:.38;}
+.os-frame:has(.browser-webview) #cursor-navigation {inset:12px 12px auto auto;}
+.os-frame:has(.browser-webview) #cursor-navigation button:not([data-cursor-nav=back]),
+.os-frame:has(.browser-controls:not([hidden])) #cursor-navigation {display:none;}
+
+.os-display .os-app-orb-icon :is(svg,.os-geo-icon) {color:#333!important;text-shadow:none!important;filter:none!important;}
+.os-display .browser-bookmarks span {text-shadow:none!important;filter:none!important;}
+.os-controller-dock,.os-controller-dock * {border:0!important;}
+.os-frame .kai-hud .kai-bubble {height:auto!important;max-height:none!important;overflow:visible!important;flex:none!important;}
+body[data-os-scene=black] .os-frame .lego-system-layer:has(.kai-hud) {background:#000!important;}
+body:not([data-os-scene]) .os-frame .lego-system-layer:has(.kai-hud) {background:#000!important;}

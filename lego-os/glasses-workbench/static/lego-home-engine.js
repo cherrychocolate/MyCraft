@@ -5,5 +5,10 @@
  function gesture(dx,dy,edge){if(Math.hypot(dx,dy)<48)return null;if(edge)return ({up:dy>36,left:dx>36,right:dx< -36,down:dy< -36})[edge]?edge:null;return Math.abs(dx)>Math.abs(dy)?(dx<0?'right':'left'):(dy>0?'up':'down')}
  function spatial(page){return ({controls:'up',quick:'left',hub:'right',dashboard:'right',notifications:'right',center:'down',app:'down'})[page]||'home'}
  function activity(recording,playing,instances=[],notifications=[]){if(recording)return {kind:'recording',label:'录音中',page:'voice'};if(playing)return {kind:'speaking',label:'正在播报',page:'voice'};const run=instances.find(x=>x.status==='running');if(run)return {kind:'working',label:run.name,page:'tasks'};const notice=notifications.find(x=>!x.read&&['high','urgent'].includes(x.priority));return notice?{kind:'priority',label:notice.title,page:'notifications'}:null}
- root.LegoHomeEngine={selectPin,phase,gesture,spatial,activity};
+ function uniqueServices(apps){
+  const calendars=apps.filter(app=>app.release?.snapshot?.template==='calendar');
+  const canonical=calendars.find(app=>app.release.snapshot.runtimeConfig?.calendarMode==='live')||calendars[0];
+  return apps.filter(app=>app.release?.snapshot?.template!=='calendar'||app===canonical);
+ }
+ root.LegoHomeEngine={selectPin,phase,gesture,spatial,activity,uniqueServices};
 })(globalThis);

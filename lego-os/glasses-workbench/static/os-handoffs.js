@@ -5,6 +5,7 @@
     {id:'travel', name:'出行', glyph:'pin'},
     {id:'shop', name:'购物', glyph:'cube'}
   ];
+  if (window.LegoSite) entries.push({id:'reddit',name:'Reddit'});
   const telegramRoutes = new Set([
     'addemoji','addlist','addstickers','addstyle','addtheme','auction','auth','boost','call',
     'confirmphone','contact','giftcode','invoice','joinchat','login','nft','proxy','setlanguage',
@@ -48,6 +49,11 @@
     </form>`;
   }
   const body = {
+      reddit: () => `<div class="handoff-options">
+        ${travelLink('热门帖子','Reddit 官网','https://www.reddit.com/r/popular/','news')}
+        ${travelLink('科技社区','r/technology','https://www.reddit.com/r/technology/','link')}
+        ${travelLink('虚拟现实社区','r/virtualreality','https://www.reddit.com/r/virtualreality/','link')}
+      </div>`,
       chat: () => `<form class="handoff-card" data-handoff-form="telegram">
         <label>Telegram 用户名<input name="recipient" placeholder="@用户名" maxlength="33" required autocomplete="off"></label>
         <label>消息草稿<textarea name="draft" rows="3" maxlength="1500"></textarea></label>

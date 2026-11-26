@@ -1,0 +1,4 @@
+/dist/
+/.openai/
+/src/catalog.mjs
+/src/frozen.mjs

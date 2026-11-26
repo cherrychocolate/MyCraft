@@ -1,9 +1,108 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {runtime} from './runtime.mjs';
-import {sanitize} from '../src/security.mjs';import {validate} from '../src/agent.mjs';
-test('anonymous cannot read any business source, data, model or media',async()=>{const r=runtime();for(const path of ['/api/state','/api/models/state','/os-shell.js','/editor/index.js','/frozen-media/test','/api/models/voice/audio?id=test']){const res=await r.call(path,{user:null});assert.equal(res.status,401,path);assert.ok(!(await res.text()).includes('test-qwen-secret'))}const landing=await r.call('/',{user:null});assert.match(await landing.text(),/使用 ChatGPT 登录/);r.close()});
-test('individual approval, owner-only review and immediate revocation gate every request',async()=>{const r=runtime();let res=await r.call('/api/access/request',{user:'alice',method:'POST',body:{reason:'体验'}});assert.equal(res.status,200);assert.equal((await r.call('/api/state',{user:'alice'})).status,403);assert.equal((await r.call('/api/access/requests',{user:'alice'})).status,403);assert.equal((await r.call('/api/access/review',{user:'alice',method:'POST',body:{userId:r.prefix+'alice',status:'approved'}})).status,403);res=await r.call('/api/access/review',{method:'POST',body:{userId:r.prefix+'alice',status:'approved'}});assert.equal(res.status,200);assert.equal((await r.call('/api/state',{user:'alice'})).status,200);await r.call('/api/access/review',{method:'POST',body:{userId:r.prefix+'alice',status:'revoked'}});assert.equal((await r.call('/api/state',{user:'alice'})).status,403);r.close()});
-test('cross-origin writes cannot apply, approve or mutate',async()=>{const r=runtime();assert.equal((await r.call('/api/access/request',{method:'POST',user:'alice',body:{reason:'test'},origin:'https://evil.local'})).status,403);assert.equal((await r.call('/api/save',{method:'POST',body:{},origin:'null'})).status,403);r.close()});
-test('approved visitors have isolated documents, histories, sessions and exports',async()=>{const r=runtime();for(const user of ['alice','bob']){await r.call('/api/access/request',{user,method:'POST',body:{reason:'test'}});await r.call('/api/access/review',{method:'POST',body:{userId:r.prefix+user,status:'approved'}})}const d={id:'private-alice',name:'PRIVATE DATA'};assert.equal((await r.call('/api/save',{user:'alice',method:'POST',body:{kind:'service',document:d}})).status,200);const bob=await(await r.call('/api/state',{user:'bob'})).text();assert.ok(!bob.includes('private-alice'));const ex=await(await r.call('/api/export',{user:'bob'})).text();assert.ok(!ex.includes('PRIVATE DATA'));assert.equal((await r.call('/api/models/agent/session?id=private-alice',{user:'bob'})).status,400);r.close()});
-test('secrets and workspace are absent from state, voice config, assets and exports',async()=>{const r=runtime();for(const path of ['/api/state','/api/models/state','/api/models/voice/config','/api/export','/index.html','/cloud-session.js']){const res=await r.call(path);assert.equal(res.status,200,path);const text=await res.text();for(const secret of [r.env.QWEN_API_KEY,r.env.GEMINI_API_KEY,r.env.QWEN_WORKSPACE_ID])assert.ok(!text.includes(secret),path)}assert.deepEqual(sanitize({workspaceId:'x',credentialRef:'x',message:r.env.QWEN_API_KEY},r.env),{message:'[protected]'});r.close()});
-test('generic save cannot overwrite model settings, ACL or immutable releases',async()=>{const r=runtime();await r.call('/api/state');for(const kind of ['settings','model-profile','access_requests','release','osstate'])assert.equal((await r.call('/api/save',{method:'POST',body:{kind,document:{id:'x'}}})).status,400);assert.equal((await r.call('/api/save',{method:'POST',body:{kind:'service',document:{id:'os-state'}}})).status,400);r.close()});
-test('model tool proposals never escape installed release and surface allowlists',()=>{const item={id:'a',releaseId:'r1',surfaces:['window'],routes:['today'],requiresConfirmation:true};assert.throws(()=>validate([{type:'run_service',serviceId:'other'}],[item]));assert.throws(()=>validate([{type:'present_service',serviceId:'a',surface:'widget'}],[item]));assert.throws(()=>validate([{type:'fetch',serviceId:'a',url:'https://bad.local'}],[item]));assert.equal(validate([{type:'run_service',serviceId:'a'}],[item])[0].requiresConfirmation,true)});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {runtime} from './runtime.mjs';
+import {sanitize} from '../src/security.mjs';
+import {validate} from '../src/agent.mjs';
+
+const origin='https://test.local';
+async function entry(r,user) {
+  const response=await r.call('/',{user});
+  assert.equal(response.status,200);
+  const cookie=response.headers.get('Set-Cookie');
+  assert.match(cookie,/Secure; HttpOnly; SameSite=Strict/);
+  return cookie.split(';',1)[0];
+}
+const post=(r,path,user,cookie,body)=>r.call(path,{user,cookie,body,method:'POST',origin});
+
+test('anonymous visitors see the simulator and sample data. The workbench stays private',async t=>{
+  const r=runtime();t.after(r.close);
+  const landing=await r.call('/',{user:null});
+  assert.equal(landing.status,200);
+  assert.match(await landing.text(),/os-shell\.js/);
+  for(const path of ['/workbench','/index.html','/access','/api/export','/architecture/index.html']){
+    assert.equal((await r.call(path,{user:null})).status,404,path);
+  }
+  const data=await r.call('/api/state',{user:null});
+  assert.equal(data.status,200);
+  assert.match(await data.text(),/trial-calendar/);
+  const sample=await post(r,'/api/calendar',null,undefined,{calendarId:'workbench-calendar',start:'2026-11-23',end:'2026-11-29'});
+  assert.equal((await sample.json()).result.length,5);
+  assert.equal((await post(r,'/api/models/agent/turn',null,undefined,{text:'你好'})).status,401);
+  assert.equal((await r.call('/workbench')).status,200);
+  assert.equal((await r.call('/workbench',{user:'alice'})).status,404);
+});
+
+test('trial services require a matching signed simulator session and enforce the owner policy',async t=>{
+  const r=runtime();t.after(r.close);
+  const owner=await entry(r,'owner'),alice=await entry(r,'alice'),bob=await entry(r,'bob');
+  const path='/api/models/agent/catalog';
+  assert.equal((await r.call(path,{user:'alice'})).status,403);
+  assert.equal((await r.call(path,{user:'alice',cookie:bob})).status,403);
+  assert.equal((await r.call(path,{user:'alice',cookie:alice})).status,200);
+  assert.equal((await post(r,'/api/access/mode','alice',alice,{mode:'approval'})).status,404);
+  assert.equal((await post(r,'/api/access/mode','owner',owner,{mode:'approval'})).status,200);
+  assert.equal((await post(r,'/api/weather',null,undefined,{lat:22.5431,lon:114.0579})).status,401);
+  assert.equal((await post(r,'/api/models/youtube/search',null,undefined,{query:'test'})).status,401);
+  assert.equal((await r.call(path,{user:'alice',cookie:alice})).status,403);
+  assert.equal((await post(r,'/api/access/request','alice',alice,{reason:'体验'})).status,200);
+  assert.equal((await post(r,'/api/access/review','owner',owner,{userId:r.prefix+'alice',status:'approved'})).status,200);
+  assert.equal((await r.call(path,{user:'alice',cookie:alice})).status,200);
+  assert.equal((await post(r,'/api/access/review','owner',owner,{userId:r.prefix+'alice',status:'revoked'})).status,200);
+  assert.equal((await r.call(path,{user:'alice',cookie:alice})).status,403);
+});
+
+test('public weather and YouTube reach the provider without enabling private services',async t=>{
+  const r=runtime();t.after(r.close);
+  r.env.YOUTUBE_API_KEY='test-youtube-secret';
+  t.mock.method(globalThis,'fetch',async (value,options)=>{
+    const url=new URL(value);
+    assert.equal(options.redirect,'manual');
+    if(url.hostname==='api.open-meteo.com')return Response.json({current:{temperature_2m:22}});
+    assert.equal(url.hostname,'www.googleapis.com');
+    assert.equal(options.headers['X-Goog-Api-Key'],r.env.YOUTUBE_API_KEY);
+    return Response.json({items:[{id:{videoId:'jNQXAC9IVRw'},snippet:{title:'Test video'}}]});
+  });
+  const weather=await post(r,'/api/weather',null,undefined,{lat:22.5431,lon:114.0579});
+  assert.equal(weather.status,200);
+  const search=await post(r,'/api/models/youtube/search',null,undefined,{query:'test'});
+  assert.equal(search.status,200);
+  assert.deepEqual((await search.json()).items.map(v=>v.id),['jNQXAC9IVRw']);
+  assert.equal((await post(r,'/api/calendar-import',null,undefined,{})).status,401);
+  assert.equal((await post(r,'/api/os-state',null,undefined,{})).status,401);
+});
+
+test('cross-origin writes fail and one visitor cannot read another calendar',async t=>{
+  const r=runtime();t.after(r.close);
+  const alice=await entry(r,'alice'),bob=await entry(r,'bob');
+  const read={calendarId:'workbench-calendar',start:'2026-11-26',end:'2026-11-26'};
+  const body={ics:'BEGIN:VCALENDAR\nBEGIN:VEVENT\nDTSTART:20261126T090000\nSUMMARY:Private Alice event\nEND:VEVENT\nEND:VCALENDAR'};
+  const endpoint='/api/calendar-import';
+  assert.equal((await r.call(endpoint,{user:'alice',cookie:alice,method:'POST',body,origin:'https://other.local'})).status,403);
+  assert.equal((await post(r,endpoint,'alice',alice,body)).status,200);
+  assert.match(await (await post(r,'/api/calendar','alice',alice,read)).text(),/Private Alice event/);
+  assert.doesNotMatch(await (await post(r,'/api/calendar','bob',bob,read)).text(),/Private Alice event/);
+  assert.doesNotMatch(await (await post(r,'/api/calendar',null,undefined,read)).text(),/Private Alice event/);
+  assert.equal((await post(r,'/api/save','alice',alice,{})).status,404);
+});
+
+test('responses omit secrets and owner-only state cannot be updated by a generic save',async t=>{
+  const r=runtime();t.after(r.close);
+  const owner=await entry(r,'owner');
+  for(const path of ['/api/state','/api/models/state','/api/models/voice/config','/api/export','/workbench','/cloud-session.js']){
+    const res=await r.call(path,{cookie:owner});
+    assert.equal(res.status,200,path);
+    const body=await res.text();
+    for(const secret of [r.env.QWEN_API_KEY,r.env.GEMINI_API_KEY,r.env.QWEN_WORKSPACE_ID,r.env.WORKBENCH_SESSION_SECRET])assert.ok(!body.includes(secret),path);
+  }
+  assert.deepEqual(sanitize({workspaceId:'x',credentialRef:'x',message:r.env.QWEN_API_KEY},r.env),{message:'[protected]'});
+  for(const kind of ['settings','model-profile','access_requests','release','osstate'])assert.equal((await post(r,'/api/save','owner',owner,{kind,document:{id:'x'}})).status,400);
+  assert.equal((await post(r,'/api/save','owner',owner,{kind:'service',document:{id:'os-state'}})).status,400);
+});
+
+test('model actions are limited to installed releases and allowed surfaces',()=>{
+  const item={id:'a',releaseId:'r1',surfaces:['window'],routes:['today'],requiresConfirmation:true};
+  assert.throws(()=>validate([{type:'run_service',serviceId:'other'}],[item]));
+  assert.equal(validate([{type:'present_service',serviceId:'a',surface:'widget'}],[item])[0].surface,'window');
+  assert.throws(()=>validate([{type:'fetch',serviceId:'a',url:'https://example.com'}],[item]));
+  assert.equal(validate([{type:'run_service',serviceId:'a'}],[item])[0].requiresConfirmation,true);
+});

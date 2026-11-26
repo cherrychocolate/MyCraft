@@ -1,4 +1,4 @@
-/* The focus order is circular. Its visible window is a centered hexagonal cluster. */
+/* Stable application slots with a rolling window of visible rows. */
 (function () {
   const icons = {
     weather:'weather.svg', reddit:'reddit.png', youtube:'youtube.png'
@@ -12,55 +12,14 @@
     ['文件','cube'],['连接','link'],['工具','grid'],['航班','arrow'],
     ['联系人','voice'],['发现','sun'],['睡眠','moon'],['实时雨况','rain']
   ];
-  const pairedSlots = [[1,0],[0,-1],[1,-1]];
-  const opposite = ([q,r]) => [-q,-r];
-  const distance = (q,r) => Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r));
-
-  function slots(count) {
-    const side = pairedSlots.slice();
-    for (let radius=2;side.length<Math.floor(count/2);radius++) {
-      if (radius>2) side.push([radius,-1]);
-      for (let r=0;r> -radius;r--) if (r!==-1||radius===2) side.push([radius,r]);
-      for (let q=radius;q>=0;q--) side.push([q,-radius]);
-      for (let r=1-radius;r<0;r++) side.push([-radius-r,r]);
-    }
-    return side;
-  }
-
-  function layout(count) {
-    const side=slots(count);
-    function cell(index, selected) {
-      const offset=(index-selected+count)%count;
-      if (!offset) return [0,0];
-      return offset<=count/2 ? side[offset-1] : opposite(side[count-offset-1]);
-    }
-    const cells=Array.from({length:count},(_,i)=>cell(i,0));
-    const spanX=Math.max(1,...cells.map(([q,r])=>Math.abs(q+r/2)));
-    const spanY=Math.max(1,...cells.map(([,r])=>Math.abs(r)));
-    const {width,height}=osDisplaySize();
-    const fit=Math.min(1,(width/2-52)/(148*spanX),(height/2-76)/(128*spanY));
-    return {
-      diameter:Math.min(height===600 ? 152 : 160,Math.round(148*fit*1.08)),
-      position(index,selected) {
-        const [q,r]=cell(index,selected);
-        const depth=distance(q,r);
-        return {x:(q+r/2)*148*fit,y:r*128*fit,
-          scale:depth===0 ? 1 : Math.max(.48,.93/(1+depth*.26)),order:Math.max(1,32-depth)};
-      }
-    };
-  }
+  const landscape = () => window.LegoDisplay?.size().width === 800;
+  let firstRow = 0;
 
   function catalog() {
     const installed=osInstalled();
     const calendars=installed.filter(app=>app.release.snapshot.template==='calendar');
     const calendar=calendars.find(app=>app.release.snapshot.runtimeConfig?.calendarMode==='live') || calendars[0];
-    let apps=installed.filter(app=>app.release.snapshot.template!=='calendar'||app===calendar);
-    const preferred=apps.find(app=>app.id===osData.settings.quickLaunchServiceId) ||
-      apps.find(app=>app.release.snapshot.template==='weather') || apps[0];
-    if (preferred) {
-      const [left,up,down,right,upperRight,bottomLeft,...rest]=apps.filter(app=>app!==preferred);
-      apps=[preferred,right,up,upperRight,...rest,bottomLeft,down,left].filter(Boolean);
-    }
+    const apps=installed.filter(app=>app.release.snapshot.template!=='calendar'||app===calendar);
     const real=apps.map(({id,release})=>{
       const doc=release.snapshot;
       const youtube=doc.nodes?.some(node=>node.atomId==='C_YOUTUBE_SEARCH');
@@ -77,65 +36,63 @@
     const examples=previews.slice(0,20-result.length).map(([name,glyph],i)=>({
       id:'preview-app-'+i,name,glyph,kind:'sample-'+i%5,preview:true
     }));
-    result.splice(Math.ceil(result.length/2),0,...examples);
-    return result;
+    return result.concat(examples);
   }
 
-  function appButton(app,index,geometry) {
-    const {x,y,scale,order}=geometry.position(index,0);
+  function appButton(app,slot,first) {
     const mark=app.glyph ? GlassGraphics.icon(app.glyph,62) :
       `<img src="/app-icons/${icons[app.kind]}" alt="" decoding="async">`;
     const destination=app.systemPage?`data-page="${esc(app.systemPage)}"`:`data-launch="${esc(app.id)}"`;
-    return `<button class="os-app-orb orb-${app.kind}" ${destination} data-orbit-index="${index}" aria-label="${esc(app.name)}"
-      ${app.preview?'data-preview-app':''} ${index===0?'data-focus-default data-centered':''}
-      style="--orbit-x:${x}px;--orbit-y:${y}px;--orbit-scale:${scale};--orbit-order:${order}">
-      <span class="os-app-orb-icon">${mark}</span>
+    return `<button class="os-app-orb orb-${app.kind}" ${destination} data-app-slot="${slot}"
+      aria-label="${esc(app.name)}" ${app.preview?'data-preview-app':''} ${first?'data-focus-default':''}>
+      <span class="os-app-orb-icon">${mark}</span><span class="os-app-label">${esc(app.name)}</span>
     </button>`;
   }
 
-  function center(button,{animate=true}={}) {
-    const field=button.closest('.os-app-cluster');
-    const icons=field.querySelectorAll('.os-app-orb');
-    const previous=field.querySelector('[data-centered]');
-    const motion=animate&&previous!==button&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
-    field.querySelector('.os-app-selection').textContent=button.getAttribute('aria-label');
-    const selected=Number(button.dataset.orbitIndex), geometry=layout(icons.length);
-    for (const icon of icons) {
-      const {x,y,scale,order}=geometry.position(Number(icon.dataset.orbitIndex),selected);
-      const travelling=motion&&(icon===previous||icon===button);
-      icon.toggleAttribute('data-orbit-travel',travelling);
-      if(motion&&!travelling&&icon.style.getPropertyValue('--orbit-x')!==x+'px'){
-        icon.animate([{opacity:.7},{opacity:1}],{duration:145,easing:'ease-out'});
-      }
-      for (const [name,value] of Object.entries({x:x+'px',y:y+'px',scale,order})) {
-        icon.style.setProperty('--orbit-'+name,value);
-      }
-      icon.toggleAttribute('data-centered',icon===button);
-    }
+  function revealRows(field, destination) {
+    const rows=[...field.querySelectorAll('.os-app-row')];
+    const visible=Number(field.dataset.visibleRows);
+    const start=Math.max(0,Math.min(destination,rows.length-visible));
+    if(start===firstRow)return false;
+    firstRow=start;
+    field.style.setProperty('--launcher-first-row',firstRow);
+    for(const [i,row] of rows.entries())row.inert=i<firstRow||i>=firstRow+visible;
+    field.querySelector('[data-focus-default]')?.removeAttribute('data-focus-default');
+    rows[firstRow].firstElementChild?.setAttribute('data-focus-default','');
+    return true;
   }
 
   function next(items,id,direction) {
-    const orbs=items.filter(item=>item.el.matches('.os-app-orb'));
-    const current=orbs.find(item=>item.id===id);
-    if (!current) return orbs[0]?.id;
-    const step={left:-1,right:1,up:2,down:-2}[direction];
-    const index=(Number(current.el.dataset.orbitIndex)+step+orbs.length)%orbs.length;
-    const target=orbs.find(item=>Number(item.el.dataset.orbitIndex)===index);
-    if (!target || target===current) return null;
-    const axis=direction==='left'||direction==='right' ? 'x' : 'y';
-    const sign=direction==='left'||direction==='up' ? -1 : 1;
-    // At small even counts the furthest position is shared, so an empty direction is a no-op.
-    const delta=parseFloat(target.el.style.getPropertyValue('--orbit-'+axis));
-    return delta*sign>0 ? target.id : null;
+    const icon=items.find(item=>item.id===id)?.el;
+    const field=icon?.closest('.os-app-cluster');
+    if(!field)return null;
+    const slot=Number(icon.dataset.appSlot);
+    const columns=Number(field.dataset.columns);
+    const row=Math.floor(slot/columns), column=slot%columns;
+    const dx=direction==='left'?-1:direction==='right'?1:0;
+    const dy=direction==='up'?-1:direction==='down'?1:0;
+    const targetRow=field.querySelectorAll('.os-app-row')[row+dy];
+    if(!targetRow||column+dx<0||column+dx>=columns)return null;
+    const target=targetRow.children[column+dx]||(dy?targetRow.lastElementChild:null);
+    if(target&&targetRow.inert)revealRows(field,firstRow+dy);
+    return target;
   }
 
   osCenter = function () {
     const apps=catalog();
-    if (!apps.length) return '<p class="os-app-launcher-empty">暂无已安装应用</p>';
-    const geometry=layout(apps.length);
-    return `<div class="os-app-cluster" role="group" aria-label="应用入口" style="--app-diameter:${geometry.diameter}px">
-      ${apps.map((app,index)=>appButton(app,index,geometry)).join('')}
-      <span class="os-app-selection" aria-hidden="true">${esc(apps[0].name)}</span>
+    if(!apps.length)return '<p class="os-app-launcher-empty">暂无已安装应用</p>';
+    const wide=landscape();
+    const columns=wide?5:3;
+    const total=Math.ceil(apps.length/columns);
+    const visible=Math.min(total,wide?2:3);
+    firstRow=Math.min(firstRow,total-visible);
+    const rows=Array.from({length:total},(_,row)=>
+      `<div class="os-app-row" ${row<firstRow||row>=firstRow+visible?'inert':''}>
+        ${apps.slice(row*columns,(row+1)*columns).map((app,index)=>appButton(app,row*columns+index,row===firstRow&&index===0)).join('')}
+      </div>`).join('');
+    return `<div class="os-app-cluster" role="group" aria-label="应用入口" data-columns="${columns}" data-visible-rows="${visible}"
+      style="--launcher-first-row:${firstRow};--launcher-columns:${columns};--launcher-visible-rows:${visible}">
+      <div class="os-app-window"><div class="os-app-track">${rows}</div></div>
     </div>`;
   };
 
@@ -149,5 +106,33 @@
     return click(event);
   };
 
-  window.LegoAppLauncher={center,next};
+  let wheelAt=0,drag=null,suppressClickUntil=0;
+  document.addEventListener('wheel',event=>{
+    const field=event.target.closest('.os-app-cluster');
+    if(!field||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+    event.preventDefault();
+    if(Date.now()-wheelAt<260)return;
+    wheelAt=Date.now();
+    if(revealRows(field,firstRow+Math.sign(event.deltaY)))window.LegoGamepad?.refreshFocus(true);
+  },{passive:false});
+  document.addEventListener('pointerdown',event=>{
+    const field=event.target.closest('.os-app-cluster');
+    if(field&&event.isPrimary)drag={field,x:event.clientX,y:event.clientY};
+  });
+  document.addEventListener('pointerup',event=>{
+    if(!drag)return;
+    const {field,x,y}=drag;
+    drag=null;
+    const dx=event.clientX-x,dy=event.clientY-y;
+    if(Math.abs(dy)<28||Math.abs(dy)<Math.abs(dx))return;
+    if(revealRows(field,firstRow-Math.sign(dy)))window.LegoGamepad?.refreshFocus(true);
+    suppressClickUntil=Date.now()+300;
+  });
+  document.addEventListener('pointercancel',()=>{drag=null});
+  document.addEventListener('click',event=>{
+    if(event.target.closest('.os-app-cluster')&&Date.now()<suppressClickUntil){
+      event.preventDefault();event.stopImmediatePropagation();
+    }
+  },true);
+  window.LegoAppLauncher={next,reset(){firstRow=0;}};
 })();

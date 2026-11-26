@@ -1,6 +1,6 @@
 /* Model profiles, role routing and observable calls. Keys never return to the browser. */
 (function () {
-    const baseURL = modelAPIBase;
+    const baseURL = new URL(modelAPIBase, location.origin).href;
     let data = null, loading = null, selected = localStorage.getItem('glasshouse-model-editor'), draft = null, keyOpen = false, dirty = false, busy = false, notice = '', testJob = null, chatHistory = [], chatAnswer = '', catalogs = {};
     async function call(path, payload) { let r; const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);try {
         r = await fetch(baseURL + path, payload === undefined ? {signal:controller.signal} : {signal:controller.signal, method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

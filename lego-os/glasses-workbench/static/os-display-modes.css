@@ -46,17 +46,17 @@ body[data-os-scene] .os-device::after,
 body[data-os-scene] .device-pcb,
 body[data-os-scene] .device-screw,
 body[data-os-scene] .device-brand { visibility:hidden; }
-/* Apply the tint to each component so its backdrop can sample the live scene. */
-.os-frame {
-  --optic-surface:rgb(244 249 255 / 19%);
-  --optic-tray:rgb(244 249 255 / 23%);
-  --optic-control:rgb(244 249 255 / 16%);
-  --optic-focus:rgb(193 175 255 / 30%);
+/* Neutral glass lets the scene supply the color. */
+.os-mode {
+  --optic-surface:rgb(255 255 255 / 24%);
+  --optic-tray:var(--optic-surface);
+  --optic-control:rgb(255 255 255 / 16%);
+  --optic-focus:rgb(255 255 255 / 34%);
   --optic-text:#fff;
   --optic-muted:#fff;
   --optic-edge:inset 0 4px 13px -8px #fff9;
-  --optic-blur:blur(5px) saturate(1.08);
-  --optic-halo:0 1px 2px #16243e, 0 2px 8px #16243eba;
+  --optic-blur:blur(5px);
+  --optic-halo:0 1px 2px #0009, 0 2px 7px #0007;
 }
 .os-frame .os-display .board-content .os-widget-owner { display:contents; }
 .os-frame .os-display .board-content :is(.sv-widget.small,.lego-dashboard-pending) {
@@ -79,7 +79,7 @@ body[data-os-scene] .device-brand { visibility:hidden; }
   color:var(--optic-text)!important;
   text-shadow:var(--optic-halo);
 }
-.os-frame .os-display :is(select option,select optgroup) { color:#fff; background:#2b2f3c; }
+.os-frame .os-display :is(select option,select optgroup) { color:#262626; background:#eee; }
 body[data-os-scene] .os-device .os-frame {
   border-color:transparent;
   box-shadow:none;
@@ -159,13 +159,13 @@ body[data-os-scene] .os-display #modal.device-dialog[open] {
 }
 body[data-os-scene] .os-display #modal .dialoghead { background:var(--optic-surface); }
 body[data-os-scene] .os-display .device-focus:not(.os-app-orb,.weather-forecast,.lego-mini-widget) {
-  outline:3px solid #a5e5ff!important;
+  outline:none!important;
   box-shadow:none!important;
 }
 body[data-os-scene] .os-display .weather-forecast.device-focus h1 {
-  text-decoration-color:#a088ff;
+  text-decoration-color:#fff;
 }
-body[data-os-scene] .os-display .lego-edge i { background:#d6edfc; }
+body[data-os-scene] .os-display .lego-edge i { background:#eee; }
 
 .weather-app { padding-bottom:36px; }
 .weather-app h1 { margin:4px 0 12px; font-size:40px; }
@@ -230,83 +230,76 @@ body[data-os-scene] .os-display .lego-edge i { background:#d6edfc; }
   color:#fff;
 }
 .os-app-cluster {
-  --app-diameter:160px;
-  position:absolute;
-  inset:0;
-  overflow:hidden;
+  --launcher-first-row: 0;
+  --launcher-row-height: 164px;
+  --launcher-gutter: 44px;
+  --app-diameter: 103.7px;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: clip;
+  touch-action: none;
+}
+body[data-os-orientation=landscape] .os-app-cluster {
+  --app-diameter: 85px;
+  --launcher-row-height: 142px;
+  --launcher-gutter: 68px;
+}
+.os-app-window {
+  inline-size: calc(100% - 2 * var(--launcher-gutter));
+  block-size: calc(var(--launcher-visible-rows) * var(--launcher-row-height));
+  overflow: clip;
+}
+.os-app-track {
+  transform: translateY(calc(-1 * var(--launcher-first-row) * var(--launcher-row-height)));
+  transition: transform 220ms ease-out;
+}
+.os-app-row {
+  display: grid;
+  grid-template-columns: repeat(var(--launcher-columns), minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  block-size: var(--launcher-row-height);
 }
 .os-display .os-app-orb {
-  --orb-base:#283241;
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:var(--app-diameter);
-  height:var(--app-diameter);
-  padding:0;
-  border:0;
-  border-radius:50%;
-  color:#fff;
-  background:transparent;
-  transform:translate(calc(-50% + var(--orbit-x)),calc(-50% + var(--orbit-y))) scale(var(--orbit-scale));
-  transition:transform 260ms cubic-bezier(.22,.8,.28,1);
-  z-index:var(--orbit-order);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 7px;
+  width: min(100%, 145px);
+  padding: 0;
+  background: transparent !important;
 }
-.os-display .orb-weather { --orb-base:#2863a5; }
-.os-display .orb-calendar { --orb-base:#34564b; }
-.os-display .orb-reddit { --orb-base:#ff4500; }
-.os-display .orb-youtube { --orb-base:#ff0033; }
-.os-display .orb-video { --orb-base:#453652; }
-.os-display .orb-external { --orb-base:#574838; }
-.os-display .orb-chat { --orb-base:#4a41b4; }
-.os-display .orb-travel { --orb-base:#186b72; }
-.os-display .orb-shop { --orb-base:#b64a19; }
-.os-display .orb-sample-0 { --orb-base:#426b69; }
-.os-display .orb-sample-1 { --orb-base:#535b89; }
-.os-display .orb-sample-2 { --orb-base:#80564d; }
-.os-display .orb-sample-3 { --orb-base:#3a638c; }
-.os-display .orb-sample-4 { --orb-base:#676347; }
 .os-app-orb-icon {
-  display:grid;
-  place-items:center;
-  width:100%;
-  height:100%;
-  background:var(--orb-base);
-  border-radius:50%;
-  overflow:hidden;
+  display: grid;
+  place-items: center;
+  width: var(--app-diameter);
+  height: var(--app-diameter);
+  background: linear-gradient(145deg, rgb(255 255 255 / 78%), rgb(255 255 255 / 54%));
+  border-radius: 50%;
 }
-.os-app-orb-icon img { width:53%; height:53%; object-fit:contain; }
-.orb-weather .os-app-orb-icon img { width:94%; height:94%; }
-.orb-youtube .os-app-orb-icon img { width:100%; height:100%; }
-.orb-reddit .os-app-orb-icon img { width:100%; height:100%; }
-.os-app-selection {
-  position:absolute;
-  left:50%;
-  bottom:18px;
-  transform:translateX(-50%);
-  z-index:40;
-  max-width:174px;
-  padding:5px 15px;
-  border-radius:16px;
-  background:#303e4a;
-  color:#fff;
-  font-size:25px;
-  font-weight:550;
-  line-height:1.3;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  pointer-events:none;
+body[data-os-scene] .os-app-orb-icon { backdrop-filter: var(--optic-blur); }
+.os-app-orb-icon img { width: 56%; height: 56%; object-fit: contain; }
+.os-app-label {
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font: 550 22px/1.25 system-ui, sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.os-display .os-app-orb:is(:hover,:focus-visible,.device-focus) {
-  background:transparent;
-  outline:none!important;
-  box-shadow:none!important;
+.os-display .os-app-orb:is(:hover,:focus-visible,.device-focus) .os-app-orb-icon {
+  background: linear-gradient(145deg, rgb(255 255 255 / 93%), rgb(255 255 255 / 73%));
 }
-.os-app-orb:focus-visible:not([data-centered]) .os-app-orb-icon {
-  box-shadow:inset 0 0 0 4px #ff793d;
+.os-display .os-app-orb:is(:focus-visible,.device-focus) .os-app-label {
+  background: var(--optic-focus);
+  backdrop-filter: var(--optic-blur);
 }
-@media (prefers-reduced-motion:reduce) {
-  .os-display .os-app-orb { transition:none; }
+@media (prefers-reduced-motion: reduce) {
+  .os-app-track { transition: none; }
 }
 
 .handoff-page { display:grid; gap:14px; padding:8px 0 24px; }

@@ -103,6 +103,7 @@
     direction.onchange = () => {
       orientation = direction.value;
       localStorage.setItem(preference, orientation);
+      window.LegoAppLauncher?.reset();
       renderOS();
       $('#display-orientation')?.focus();
     };

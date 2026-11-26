@@ -58,6 +58,7 @@
         <div><dt>日出</dt><dd>${esc(daily.sunrise?.[0]?.slice(11,16) || '—')}</dd></div>
         <div><dt>日落</dt><dd>${esc(daily.sunset?.[0]?.slice(11,16) || '—')}</dd></div>
       </dl>
+      ${i.s.weatherSource ? `<small>${esc(i.s.weatherSource)}</small>` : ''}
       ${lastRefreshError ? `<small role="status">刷新失败${updatedAt ? ' · 上次更新 ' + esc(new Date(updatedAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})) : ''}</small>` : ''}
     </section>`;
   };
