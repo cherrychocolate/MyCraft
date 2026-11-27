@@ -4,7 +4,7 @@
     weather:'weather.svg', reddit:'reddit.png', youtube:'youtube.png'
   };
   const glyphs = {calendar:'calendar',video:'play',external:'link',custom:'grid'};
-  const labels = {weather:'天气',calendar:'课表',reddit:'Reddit',youtube:'YouTube'};
+  const labels = {weather:'天气',calendar:'课表',reddit:'Reddit',youtube:'GlassTube'};
   const previews = [
     ['地图','pin'],['相册','image'],['时钟','clock'],
     ['音乐','play'],['备忘','book'],['录音','voice'],['待办','check'],

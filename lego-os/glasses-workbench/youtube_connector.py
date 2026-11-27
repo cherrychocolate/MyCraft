@@ -67,7 +67,7 @@ def search(server,vault,p):
     thumbs=sn.get('thumbnails',{});image=next((thumbs[k].get('url') for k in ('high','medium','default') if thumbs.get(k)),None)
     if image and not re.match(r'^https://(?:i\.ytimg\.com|i\d\.ytimg\.com)/',image):image=None
     items.append({'id':ident,'title':html.unescape(sn.get('title','')),'excerpt':html.unescape(sn.get('description','')),'url':'https://www.youtube.com/watch?v='+ident,'author':sn.get('channelTitle',''),'channelId':sn.get('channelId',''),'published':sn.get('publishedAt'),'media':{'images':[image] if image else [],'video':None},'sourcePlatform':'youtube'})
-   feed={'type':'content-feed','platform':'youtube','query':query,'ranking':ranking,'items':items,'source':'YouTube Data API v3 · 官方','at':time.time(),'cached':False,'nextPageToken':result.get('nextPageToken'),'limitations':['公开搜索结果，不代表个性化推荐；播放受网络、地区与版权限制。']}
+   feed={'type':'content-feed','platform':'youtube','query':query,'ranking':ranking,'pageSize':limit,'items':items,'source':'YouTube Data API v3 · 官方','at':time.time(),'cached':False,'nextPageToken':result.get('nextPageToken'),'limitations':['公开搜索结果，不代表个性化推荐；播放受网络、地区与版权限制。']}
    server.save({'id':cache_id,'feed':feed},'connector-cache',cached.get('_revision') if cached else None)
    server.log_run({'type':'youtube-api','status':'succeeded','operation':'search.list','itemCount':len(items),'durationMs':round((time.time()-started)*1000)})
    return feed
