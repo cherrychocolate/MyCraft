@@ -83,25 +83,27 @@ function simpleReceipt(pending,receipts){
 }
 export async function turn(env,owner,p){
  const text=String(p.text||'').trim();
- if(!text||text.length>6000)throw Error('请输入1到6000字');
+ const guest=S.isGuestWorkspace(owner),limit=guest?1200:6000;
+ if(!text||text.length>limit)throw Error('请输入 1 到 '+limit+' 字');
  let s=p.sessionId?await S.get(env.DB,owner,p.sessionId):null;
  if(p.sessionId&&s?._kind!=='agent-session')throw Error('会话不存在，请开启新对话');
  s||={id:'agent-'+crypto.randomUUID(),title:text.slice(0,60),history:[],turn:0,pending:[],receipts:[]};
  const receipts=p.toolResults||[];
  if(!Array.isArray(receipts)||receipts.length!==s.pending.length||new Set(receipts.map(x=>x.id)).size!==receipts.length||
     receipts.some(x=>!s.pending.some(a=>a.id===x.id)||!['succeeded','failed','blocked','cancelled'].includes(x.status)))throw Error('工具回执与本轮计划不匹配');
- const items=await catalog(env,owner);
+ const items=await catalog(env,guest?'__preview':owner);
  let response={provider:'Lego OS',model:'服务路由',profileId:null};
  let result=s.pendingSimple?simpleReceipt(s.pending,receipts):!receipts.length?simplePlan(text,items,p.context):null;
  const usingSimple=!!result;
  if(!result){
   const context={catalog:items,toolResults:receipts,runtime:p.context||{}};
   if(JSON.stringify(context).length>70000)throw Error('服务上下文过大');
-  const rules=AGENT+'\n语音回复可以直接使用：present_schedule 查看课表；search_videos 搜索公开视频；open_browser 接收已知网站地址；present_service 仅展示与问题相关的真实数据。';
+  const rules=AGENT+'\n语音回复可以直接使用：present_schedule 查看课表；search_videos 搜索公开视频；open_browser 接收已知网站地址；present_service 仅展示与问题相关的真实数据。'+(guest?'\n访客试用回答简洁，正文最多 300 字。':'');
   response=await invoke(env,owner,[{role:'system',content:rules},...s.history.slice(-8),{role:'user',content:JSON.stringify({question:text,context})}]);
   result=decode(response.text);
  }
  if(typeof result.answer!=='string')throw Error('助手没有返回回答正文');
+ if(guest)result.answer=result.answer.slice(0,600);
  const actions=validate(result.actions||[],items);
  s={...s,turn:s.turn+1,pending:actions,pendingSimple:usingSimple&&actions.length>0,updatedAt:Date.now()/1000,
     history:[...s.history,{role:'user',content:text},{role:'assistant',content:JSON.stringify({answer:result.answer})}].slice(-12),

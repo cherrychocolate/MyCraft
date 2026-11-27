@@ -56,7 +56,7 @@ assets={}
 for path in STATIC.rglob('*'):
     if not path.is_file(): continue
     rel=path.relative_to(STATIC).as_posix()
-    if '/' in rel and not rel.startswith(('editor/','audio/','app-icons/','assistant/kai-atlas/')): continue
+    if '/' in rel and rel!='assistant/sample-reply.wav' and not rel.startswith(('editor/','audio/','app-icons/','assistant/kai-atlas/')): continue
     if path.suffix not in ('.js','.css','.html','.svg','.png','.webp','.wav'): continue
     if path.suffix=='.html' and rel not in ('index.html','os.html','design-guidelines.html'): continue
     data=path.read_bytes()

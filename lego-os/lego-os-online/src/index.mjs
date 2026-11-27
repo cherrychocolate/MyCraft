@@ -10,7 +10,7 @@ import {connectors} from './connectors.mjs';
 import {weather} from './weather.mjs';
 import {DESIGN} from './prompts.mjs';
 import {identity,isOwner,checkOrigin,json,html,gateHTML,sanitize,RELEASE} from './security.mjs';
-import {visitor,pageSession,hasPageSession,protectTrial,setMode} from './portal.mjs';
+import {visitor,pageSession,hasPageSession,protectTrial,setMode,guestSession,newGuestSession,protectGuest} from './portal.mjs';
 import {youtube} from './youtube.mjs';
 import {calendar} from './calendar.mjs';
 const publicKinds=new Set(['atom','service','device','idea','release','osstate','design-asset']);
@@ -30,6 +30,26 @@ const trialPOST=new Set(['/api/os-state','/api/weather','/api/cities','/api/cale
  '/api/models/voice/asr','/api/models/voice/tts','/api/models/youtube/search','/api/models/youtube/detail']);
 const API_ACCESS=new Set(['/api/access/status','/api/access/request','/api/access/requests','/api/access/review']);
 const forbidden=()=>fail('此链接只开放模拟空间',404);
+const guestCalls=new Map([
+ ['/api/models/agent/stream','dialogue'],['/api/models/agent/turn','dialogue'],['/api/models/agent/cancel',null],
+ ['/api/models/voice/asr','asr'],['/api/models/voice/tts','tts']
+]);
+
+async function guestAssistant(req,env,url,p){
+ const id=await guestSession(req,env);
+ if(!id)throw fail('请刷新模拟空间以开始 Kai 访客试用',401);
+ const owner='__guest:'+id;
+ const path=url.pathname;
+ const kind=guestCalls.get(path);
+ if(kind)await protectGuest(req,env,id,kind);
+ if(kind==='asr'||kind==='tts')return json(sanitize(await M.speech(env,owner,kind,p),env));
+ if(path==='/api/models/agent/cancel')return json(await A.route('cancel',env,owner,p,url));
+ await S.initialize(env.DB,'__preview');
+ if(path==='/api/models/agent/catalog')return json({services:await A.catalog(env,'__preview')});
+ const turn=()=>A.turn(env,owner,p);
+ if(path==='/api/models/agent/stream')return eventStream(turn,env);
+ return json(sanitize(await turn(),env));
+}
 
 function eventStream(task,env){
  const encode=new TextEncoder();
@@ -79,18 +99,21 @@ export default {async fetch(req,env){
    const asset=ASSETS[path==='/'?'/os.html':'/index.html'];
    const response=binary(bytes(asset.base64),asset.type);
    response.headers.set('Referrer-Policy','strict-origin-when-cross-origin');
-   const session=await pageSession(env,user);
+   let session=await pageSession(env,user);
+   if(!user&&path==='/'&&(await visitor(env,null)).mode==='trial')session=await newGuestSession(req,env);
    if(session)response.headers.append('Set-Cookie',session);
    response.headers.set('Permissions-Policy','microphone=(self), camera=(self), geolocation=(self)');
    return response;
   }
   if(path==='/cloud-session.js'){
    const policy=await visitor(env,user);
-   return new Response(sessionScript(user,policy),{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+   const guest=!user&&policy.mode==='trial'?await guestSession(req,env):null;
+   return new Response(sessionScript(user,policy,guest),{headers:{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(path.startsWith('/api/')){
    const policy=await visitor(env,user);
    if(!policy.manager&&!((isPost?trialPOST:trialGET).has(path)))throw forbidden();
+   if(!user&&policy.mode==='trial'&&(isPost?guestCalls.has(path):path==='/api/models/agent/catalog'))return await guestAssistant(req,env,url,p);
    const session=policy.usable&&await hasPageSession(req,env,user);
    const sampleCalendar=isPost&&path==='/api/calendar'&&p.calendarId==='workbench-calendar';
    const openTrial=isPost&&policy.mode==='trial'&&policy.review!=='revoked'&&publicServices.has(path);

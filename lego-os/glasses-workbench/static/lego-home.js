@@ -39,6 +39,7 @@
     <article class="kai-reply" ${v.answer||v.error?'':'hidden'}>
     <div class="kai-bubble kai-assistant lego-voice-answer" data-turn="reply" role="status" ${v.answer&&!v.error?'':'hidden'}>${LegoReplyContent.render(v.answer)}</div>
     ${v.error?`<p class="kai-bubble kai-assistant" role="status">${esc(v.error)}</p>`:''}
+    ${v.speechError?`<p class="kai-bubble kai-assistant" role="status">播报暂不可用。${esc(v.speechError)}</p>`:''}
     ${window.PersonalAgent?.fragment()||''}</article>
   </div>`;
  }

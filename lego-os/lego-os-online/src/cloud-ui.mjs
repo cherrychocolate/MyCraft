@@ -1,9 +1,9 @@
-export function sessionScript(user,policy){
- const safe=JSON.stringify({id:user?.id||'',manager:policy.manager,mode:policy.mode,usable:policy.usable}).replace(/</g,'\\u003c');
+export function sessionScript(user,policy,guest){
+ const safe=JSON.stringify({id:user?.id||'',manager:policy.manager,mode:policy.mode,usable:policy.usable,guest}).replace(/</g,'\\u003c');
  return `(function(){
  const account=${safe};
  window.LEGO_VIEWER_ID=account.id||'preview';
- window.LegoSite=Object.freeze({canSync:account.usable});
+ window.LegoSite=Object.freeze({canSync:account.usable,guest:account.guest});
  const last=localStorage.getItem('mycraft-site-user');
  if(last!==account.id){['lego-agent-session','glasshouse-model-editor'].forEach(k=>localStorage.removeItem(k));localStorage.setItem('mycraft-site-user',account.id)}
  const signIn='/signin-with-chatgpt?returnTo=%2F';
@@ -19,7 +19,10 @@ export function sessionScript(user,policy){
   host.id='mycraft-site-access';host.setAttribute('aria-label','试用账号');
   host.style='position:fixed;z-index:10000;bottom:12px;right:14px;display:flex;gap:8px;align-items:center;border-radius:18px;background:#fffffff0;color:#172320;padding:7px 11px;font:13px system-ui';
   const link=(label,href)=>{const a=document.createElement('a');a.textContent=label;a.href=href;a.target='_top';host.append(a)};
-  if(!account.id)link('登录试用',signIn);
+ if(!account.id){
+  if(account.guest){const label=document.createElement('span');label.textContent='Kai 免登录试用';host.append(label)}
+  link(account.guest?'登录':'登录试用',signIn);
+ }
   else if(!account.usable){link('申请试用','/request-access');link('退出','/signout-with-chatgpt?returnTo=%2F')}
   else{
    if(account.manager){link(admin?'模拟空间':'工作台',admin?'/':'/workbench');link('访问管理','/access')}

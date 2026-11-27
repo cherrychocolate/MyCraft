@@ -20,6 +20,9 @@ test('anonymous visitors see the simulator and sample data. The workbench stays 
   assert.equal(landing.status,200);
   assert.equal(landing.headers.get('Referrer-Policy'),'strict-origin-when-cross-origin');
   assert.match(await landing.text(),/os-shell\.js/);
+  const sampleAudio=await r.call('/assistant/sample-reply.wav',{user:null});
+  assert.equal(sampleAudio.status,200);
+  assert.equal(Buffer.from(await sampleAudio.arrayBuffer()).toString('ascii',0,4),'RIFF');
   for(const path of ['/workbench','/index.html','/access','/api/export','/architecture/index.html']){
     assert.equal((await r.call(path,{user:null})).status,404,path);
   }
@@ -126,4 +129,75 @@ test('model actions are limited to installed releases and allowed surfaces',()=>
   assert.equal(validate([{type:'present_service',serviceId:'a',surface:'widget'}],[item])[0].surface,'window');
   assert.throws(()=>validate([{type:'fetch',serviceId:'a',url:'https://example.com'}],[item]));
   assert.equal(validate([{type:'run_service',serviceId:'a'}],[item])[0].requiresConfirmation,true);
+});
+
+async function guestEntry(site){
+  const r=await site.call('/',{user:null});
+  const cookie=r.headers.get('Set-Cookie');
+  assert.match(cookie,/__Host-mycraft-kai=.*Max-Age=86400; Secure; HttpOnly; SameSite=Strict/);
+  return cookie.split(';',1)[0];
+}
+
+test('guests can continue a private Kai session and approval mode disables it',async t=>{
+  const site=runtime();t.after(site.close);
+  const a=await guestEntry(site),b=await guestEntry(site),owner=await entry(site,'owner');
+  const route='/api/models/agent/turn';
+  assert.equal((await post(site,route,null,undefined,{text:'今天课表'})).status,401);
+  const first=await post(site,route,null,a,{text:'今天课表'});
+  assert.equal(first.status,200);
+  const turn=await first.json();
+  assert.equal(turn.actions[0].type,'present_schedule');
+  const receipt={id:turn.actions[0].id,status:'succeeded',result:{data:{items:[]}}};
+  const next={text:'今天课表',sessionId:turn.sessionId,toolResults:[receipt]};
+  assert.equal((await post(site,route,null,b,next)).status,400);
+  assert.equal((await post(site,route,null,a,next)).status,200);
+  assert.equal(site.db.prepare('SELECT COUNT(*) n FROM history').get().n,0);
+  assert.equal((await site.call('/api/models/agent/sessions',{user:null,cookie:a})).status,401);
+  assert.equal((await post(site,'/api/calendar-import',null,a,{})).status,401);
+  assert.equal((await site.call('/workbench',{user:null,cookie:a})).status,404);
+  assert.match(await (await site.call('/cloud-session.js',{user:null,cookie:a})).text(),/Kai 免登录试用/);
+  assert.equal((await post(site,'/api/access/mode','owner',owner,{mode:'approval'})).status,200);
+  assert.equal((await post(site,route,null,a,{text:'今天课表'})).status,401);
+  assert.equal((await site.call('/',{user:null})).headers.get('Set-Cookie'),null);
+});
+
+test('guest speech runs with bounded daily calls and returns audio without storing a blob',async t=>{
+  const site=runtime();t.after(site.close);
+  const a=await guestEntry(site),b=await guestEntry(site);
+  const wav=Buffer.alloc(48);
+  for(const [id,at] of [['RIFF',0],['WAVE',8],['fmt ',12],['data',36]])wav.write(id,at);
+  wav.writeUInt32LE(16,16);
+  wav.writeUInt16LE(1,20);
+  wav.writeUInt16LE(1,22);
+  wav.writeUInt32LE(24000,24);
+  wav.writeUInt32LE(48000,28);
+  wav.writeUInt16LE(2,32);
+  wav.writeUInt16LE(16,34);
+  wav.writeUInt32LE(0x7fffffff,4);
+  wav.writeUInt32LE(0x7fffffff,40);
+  wav.writeUInt32LE(1234,44);
+  site.env.BUCKET.put=()=>assert.fail('guest audio must not be stored');
+  t.mock.method(globalThis,'fetch',async (request,options)=>{
+    const url=new URL(request);
+    if(url.pathname.endsWith('/chat/completions'))return Response.json({choices:[{message:{content:'今天课表'}}]});
+    assert.ok(url.pathname.endsWith('/generation'));
+    assert.equal(options.headers['X-DashScope-SSE'],'enable');
+    const chunks=[wav.subarray(0,44),wav.subarray(44)].map(data=>'data: '+JSON.stringify({output:{audio:{data:data.toString('base64')}}}));
+    return new Response(chunks.join('\n\n'),{headers:{'Content-Type':'text/event-stream'}});
+  });
+  const tts=await post(site,'/api/models/voice/tts',null,a,{text:'你好'});
+  assert.equal(tts.status,200);
+  const audio=(await tts.json()).url;
+  assert.match(audio,/^data:audio\/wav;base64,/);
+  const completed=Buffer.from(audio.split(',')[1],'base64');
+  assert.equal(completed.readUInt32LE(4),40);
+  assert.equal(completed.readUInt32LE(40),4);
+  assert.equal(completed.readUInt32LE(44),1234);
+  for(let i=0;i<8;i++){
+    const asr=await post(site,'/api/models/voice/asr',null,a,{audio});
+    assert.equal(asr.status,200);
+    assert.equal((await asr.json()).text,'今天课表');
+  }
+  assert.equal((await post(site,'/api/models/voice/asr',null,a,{audio})).status,429);
+  assert.equal((await post(site,'/api/models/voice/asr',null,b,{audio})).status,200);
 });
